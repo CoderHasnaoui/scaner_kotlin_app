@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Mimiprojetzentech" parent="android:Theme.Material.Light.NoActionBar" />
+<!--    <style-->
+<!--        name="Theme.Mimiprojetzentech.Splash"-->
+<!--        parent="Theme.SplashScreen">-->
+
+<!--        <item name="windowSplashScreenBackground">#1851c5</item>-->
+<!--        <item name="windowSplashScreenAnimatedIcon">@drawable/baseline_qr_code_scanner_24</item>-->
+<!--        <item name="postSplashScreenTheme">-->
+<!--            @style/Theme.Mimiprojetzentech-->
+<!--        </item>-->
+    <style name="Theme.Mimiprojetzentech.NoSplash" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Set the same color as your animated splash background -->
+        <item name="android:windowBackground">#1851C5</item>
+    </style>
+
+
+<!--    </style>-->
+
+</resources>
