@@ -24,16 +24,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInViewModel
+import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 @Composable
-fun HomeScreen(navController: NavController, data: String? , viewModel: HomeViewModel = viewModel() ,) {
+fun HomeScreen(navController: NavController, data: String? , viewModel: HomeViewModel = viewModel() ) {
+
     val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier
@@ -105,9 +105,10 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                     ) {
                         items(viewModel.filteredBusinessGroups) { businessGroups ->
                             MyBuisneCard(
+                                id= businessGroups.id ,
                                 name = businessGroups.name,
-                                offices = listOf("VCC Main Office", "VCC Branch 1", "Warehouse"),
-                                totalBusinessCount = viewModel.businessGroups.size
+                                offices = businessGroups.offices,
+                                totalBusinessCount = viewModel.businessGroups.size , navController
                             )
                         }
                     }
@@ -119,15 +120,17 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
 
 @Composable
 fun MyBuisneCard(
+    id :Int ,
     name: String,
     offices: List<String>,
-    totalBusinessCount: Int
+    totalBusinessCount: Int , navController: NavController
 ) {
     var officesShowing by remember { mutableStateOf(2) }
     val isExpanded = officesShowing > 2
     val buisnesNumber = totalBusinessCount > 3
 
     Card(
+
         modifier = Modifier.fillMaxWidth().animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA)),
         shape = RoundedCornerShape(12.dp),
@@ -173,7 +176,10 @@ fun MyBuisneCard(
                 }
 
                 Button(
-                    onClick = {},
+                    onClick = {
+                       navController.navigate(
+                        Screen.ScannerScreen.fullRoute(id))
+                    },
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1851C5)),
                     contentPadding = PaddingValues(horizontal = 20.dp)
@@ -209,6 +215,11 @@ fun MyBuisneCard(
             }
         }
     }
+}
+
+@Composable
+fun ScannerScreen() {
+    TODO("Not yet implemented")
 }
 
 @Composable

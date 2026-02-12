@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech
 
+import ScannerScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +33,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -40,10 +40,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
+import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.DeniedScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeScreen
+import com.example.mimi_projet_zentech.ui.theme.ui.profileScreen.profileScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInScrenn
+import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.ValidScreen
 import com.example.mimi_projet_zentech.ui.theme.util.NAV_ARG_EMAIL
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
+import com.yourapp.qrscanner.permission.CameraPermission
 import kotlinx.coroutines.delay
 
 
@@ -58,7 +63,11 @@ class MainActivity : ComponentActivity() {
             insetsController.isAppearanceLightNavigationBars = true
 
             NavigationsSeting() // this is get the Sign In scereen
-//            ScanPageScreen()  // this is give the Scan of Buisnes  Screen
+//            ScanPageScreen(insetsController)  // this is give the Scan of Buisnes  Screen
+//            CameraPermission {
+//                ScannerScreen(insetsController)
+//            }
+
         }
     }
 }
@@ -70,7 +79,8 @@ fun NavigationsSeting (){
             SplashScreen(navController = navController)
         }
         composable (Screen.Login.route) {
-            SignInScrenn(navController = navController)
+
+          SignInScrenn(navController = navController)
         }
 
 
@@ -82,8 +92,29 @@ type= NavType.StringType
         {it->
             val  email = it.arguments?.getString(NAV_ARG_EMAIL)
 
-            HomeScreen(navController , email)
+               HomeScreen(navController , email)
 
+        }
+        composable(Screen.ScannerScreen.route , arguments = listOf(navArgument("buisnesIs"){
+            type = NavType.IntType
+        })) {  it->
+            val businessId =  it.arguments?.getInt("buisnesIs")
+            CameraPermission(
+                businessId ,
+                onGranted = { ScannerScreen(navController , businessId ) } ,
+                navController
+            )
+
+
+        }
+        composable (Screen.DeniedScreen.route ){
+            DeniedScreen(navController)
+        }
+        composable (Screen.Profile.route) {
+            profileScreen(navController = navController)
+        }
+        composable(Screen.ScanStatus.route){
+            ValidScreen(navController = navController )
         }
     }
 }
@@ -95,7 +126,7 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         delay(3000) // 3 seconds
         navController.navigate(Screen.Login.route) {
-            popUpTo(Screen.Splash.route) { inclusive = true }
+            popUpTo(Screen.Login.route) { inclusive = true }
         }
     }
 

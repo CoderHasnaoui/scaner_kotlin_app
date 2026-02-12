@@ -38,6 +38,12 @@ android {
     }
 }
 dependencies {
+    // CameraX
+
+    // Zixing // libraries
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.1")
+
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
@@ -54,7 +60,10 @@ dependencies {
 
         // 3. Navigation Compose (You already have this, but it's part of the flow)
         implementation("androidx.navigation:navigation-compose:2.8.5")
+
     }
+    // Compose
+
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -69,6 +78,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.camera.camera2.pipe)
+    implementation(libs.androidx.compose.ui.text)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

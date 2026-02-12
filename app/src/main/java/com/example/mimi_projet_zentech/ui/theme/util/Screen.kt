@@ -11,4 +11,13 @@ sealed class Screen (val route :String) {
         return "home/$email"
         }
     }
-}
+    object ScannerScreen : Screen("screen/{buisnesIs}"){
+        fun fullRoute(id: Int?):String{
+            return "screen/$id"
+        }
+    }
+    object  DeniedScreen : Screen("denied")
+    object  Profile :Screen("profile")
+    object ScanStatus : Screen("statusScan")
+    }
+

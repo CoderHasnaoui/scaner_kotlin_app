@@ -1,74 +1,102 @@
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowInsetsControllerCompat
+
+import com.example.mimi_projet_zentech.R
 
 
+import androidx.navigation.NavController
+import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
+import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
+import com.yourapp.qrscanner.ui.components.ZxingQrScanner
 
 
 @Composable
-fun ScanPageScreen() {
+fun ScannerScreen(navController: NavController, id: Int?) {
+    // 1. Manage the Status Bar Icons
+//    DisposableEffect(Unit) {
+//        insetsController.isAppearanceLightStatusBars = false
+//        onDispose { insetsController.isAppearanceLightStatusBars = true }
+//    }
+    val repository = HomeRepository()
+    // Use a Box to layer everything
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
+        // 2️⃣ THE CAMERA (ZXing) - This is the background
+        ZxingQrScanner { result ->
+            // Handle your QR result here!
+            var scanRes =     repository.scanTicket(id , result)
+            print("scanRes = $scanRes")
 
-        // 1️⃣ Background Image
-        Image(
-            painter = painterResource(drawable.scan_bg.png), // your image
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
 
-        // 2️⃣ Dark gradient overlay
-        Box(
+        }
+
+        TopOptionsMenu(
+            navController = navController,
+            iconColor = Color.White, // White looks better on camera
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.4f),
-                            Color.Black.copy(alpha = 0.7f)
-                        )
-                    )
-                )
+                .align(Alignment.TopEnd)
+                .padding(WindowInsets.statusBars.asPaddingValues())
+                .padding(16.dp)
         )
 
-        // 3️⃣ Focus brackets (camera overlay)
-        FocusOverlay(
-            modifier = Modifier.fillMaxSize()
+//        IconButton(
+//            onClick = { /* TODO */ },
+//            modifier = Modifier
+//                .align(Alignment.TopEnd)
+//                .padding(WindowInsets.statusBars.asPaddingValues())
+//                .padding(16.dp)
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.MoreVert,
+//                contentDescription = null,
+//                tint = Color.White
+//            )
+//        }
+
+        // 4️⃣ CENTER SCAN FRAME (The visual guide for the user)
+        Image(
+            painter = painterResource(R.drawable.center_scan),
+            contentDescription = null,
+            modifier = Modifier
+                .size(260.dp)
+                .align(Alignment.Center)
         )
 
-        // 4️⃣ Bottom Button
+
         Button(
             onClick = { /* TODO */ },
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(24.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(WindowInsets.navigationBars.asPaddingValues())
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .align(Alignment.BottomCenter),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF1D58D1)
-            )
+//            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D58D1))
         ) {
             Text(
                 text = "Check Manually",
@@ -78,46 +106,78 @@ fun ScanPageScreen() {
         }
     }
 }
+
+
 @Composable
-fun FocusOverlay(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
 
-        val stroke = 4.dp.toPx()
-        val corner = 40.dp.toPx()
-        val color = Color(0xFF2F80FF)
+fun ScanPageScreen(insetsController: WindowInsetsControllerCompat) {
 
-        val centerX = size.width / 2
-        val centerY = size.height / 2
-        val boxSize = size.width * 0.65f
+    DisposableEffect(Unit) {
+        // 1. Make icons WHITE for this screen (because of the background image)
+        insetsController.isAppearanceLightStatusBars = false
 
-        val left = centerX - boxSize / 2
-        val right = centerX + boxSize / 2
-        val top = centerY - boxSize / 2
-        val bottom = centerY + boxSize / 2
+        onDispose {
+            // 2. IMPORTANT: When leaving this screen, reset icons to DARK
+            // so the Sign-In screen is readable again!
+            insetsController.isAppearanceLightStatusBars = true
+        }
+    }
+    // We use Box to stack the UI elements
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        // Top-left
-        drawLine(color, Offset(left, top), Offset(left + corner, top), stroke)
-        drawLine(color, Offset(left, top), Offset(left, top + corner), stroke)
-
-        // Top-right
-        drawLine(color, Offset(right, top), Offset(right - corner, top), stroke)
-        drawLine(color, Offset(right, top), Offset(right, top + corner), stroke)
-
-        // Bottom-left
-        drawLine(color, Offset(left, bottom), Offset(left + corner, bottom), stroke)
-        drawLine(color, Offset(left, bottom), Offset(left, bottom - corner), stroke)
-
-        // Bottom-right
-        drawLine(color, Offset(right, bottom), Offset(right - corner, bottom), stroke)
-        drawLine(color, Offset(right, bottom), Offset(right, bottom - corner), stroke)
-
-        // Center horizontal line
-        drawLine(
-            color,
-            Offset(left + 40.dp.toPx(), centerY),
-            Offset(right - 40.dp.toPx(), centerY),
-            stroke
+        // 1️⃣ Background Image (Must be first to be at the bottom)
+        Image(
+            painter = painterResource(R.drawable.center_scan), // it was scan screen
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
+
+
+        IconButton(
+            onClick = { /* TODO */ },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(WindowInsets.statusBars.asPaddingValues()) // Protects from top bar
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More options",
+                tint = Color.White
+            )
+        }
+
+        // 3️⃣ Center Scan Frame
+        Image(
+            painter = painterResource(R.drawable.center_scan),
+            contentDescription = null,
+            modifier = Modifier
+                .size(260.dp)
+                .align(Alignment.Center)
+        )
+
+        Button(
+            onClick = { /* TODO */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(WindowInsets.navigationBars.asPaddingValues()) // Protects from bottom bar
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .align(Alignment.BottomCenter),
+            shape = RoundedCornerShape(16.dp),
+//            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D58D1))
+        ) {
+            Text(
+                text = "Check Manually",
+                color = Color.White,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
     }
 }
+
+
+
+
+
 
