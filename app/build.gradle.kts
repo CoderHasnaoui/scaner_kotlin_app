@@ -38,8 +38,8 @@ android {
     }
 }
 dependencies {
-    // CameraX
-
+    // ML Google
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // Zixing // libraries
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.zxing:core:3.5.1")

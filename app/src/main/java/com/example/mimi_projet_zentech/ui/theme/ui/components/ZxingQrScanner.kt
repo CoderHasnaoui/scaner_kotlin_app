@@ -1,7 +1,9 @@
 package com.yourapp.qrscanner.ui.components
 
+import android.content.Context
 import androidx.compose.runtime.*
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 import com.journeyapps.barcodescanner.DefaultDecoderFactory

@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.util
 
+import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 
 
 sealed class Screen (val route :String) {
@@ -18,6 +19,11 @@ sealed class Screen (val route :String) {
     }
     object  DeniedScreen : Screen("denied")
     object  Profile :Screen("profile")
-    object ScanStatus : Screen("statusScan")
+//    object ScanStatus : Screen("statusScan")
+    object  ScanRes : Screen("statusScan/{buisnisId}/{ticketNum}/{scanRes}"){
+        fun getRoute(buisnisId: Int?, ticketNum: String?, scanRes: ScanStatus):String {
+        return "statusScan/$buisnisId/$ticketNum/$scanRes"
+        }
+    }
     }
 

@@ -1,3 +1,4 @@
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsControllerCompat
@@ -30,9 +32,12 @@ import com.example.mimi_projet_zentech.R
 
 
 import androidx.navigation.NavController
+import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
+import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.ui.components.ZxingQrScanner
+//import com.yourapp.qrscanner.ui.components.startQuickScan
 
 
 @Composable
@@ -43,16 +48,22 @@ fun ScannerScreen(navController: NavController, id: Int?) {
 //        onDispose { insetsController.isAppearanceLightStatusBars = true }
 //    }
     val repository = HomeRepository()
+    var contex  = LocalContext.current
+    var scanStatus : ScanStatus
     // Use a Box to layer everything
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
         // 2️⃣ THE CAMERA (ZXing) - This is the background
         ZxingQrScanner { result ->
             // Handle your QR result here!
-            var scanRes =     repository.scanTicket(id , result)
-            print("scanRes = $scanRes")
 
-
+             scanStatus = repository.scanTicket(id , orderNumber = result)
+            Toast.makeText(contex , "id == $id  scan Status = $scanStatus" , Toast.LENGTH_LONG ).show()
+              navController.navigate(Screen.ScanRes.getRoute(
+                    buisnisId = id,
+                    ticketNum = result,
+                    scanRes = scanStatus
+                ))
         }
 
         TopOptionsMenu(

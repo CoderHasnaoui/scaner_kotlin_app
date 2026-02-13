@@ -84,11 +84,9 @@ fun NavigationsSeting (){
         }
 
 
-        composable(Screen.Home.route ,
-            arguments = listOf(navArgument(NAV_ARG_EMAIL ){
-type= NavType.StringType
-            })
-        )
+        composable(Screen.Home.route , arguments = listOf(navArgument(NAV_ARG_EMAIL) {
+                type = NavType.StringType
+            }))
         {it->
             val  email = it.arguments?.getString(NAV_ARG_EMAIL)
 
@@ -113,8 +111,25 @@ type= NavType.StringType
         composable (Screen.Profile.route) {
             profileScreen(navController = navController)
         }
-        composable(Screen.ScanStatus.route){
-            ValidScreen(navController = navController )
+//        composable(Screen.ScanStatus.route){
+//            ValidScreen(navController = navController )
+//        }
+        composable (Screen.ScanRes.route , arguments = listOf(navArgument("buisnisId")
+        {
+            type = NavType.IntType
+        } , navArgument("ticketNum"){
+            type = NavType.StringType
+        }, navArgument("scanRes"){
+            type = NavType.StringType
+        }
+        )){ it->
+            val businessId =  it.arguments?.getInt("buisnisId")
+            val ticketNum  = it.arguments?.getString("ticketNum")
+            val resString = it.arguments?.getString("scanRes") ?: "NOT_FOUND"
+            // Convert String back to Enum
+            val status = ScanStatus.valueOf(resString)
+            ValidScreen(navController = navController  , buisnesId = businessId , ticketNum = ticketNum , scanStatus = status)
+
         }
     }
 }

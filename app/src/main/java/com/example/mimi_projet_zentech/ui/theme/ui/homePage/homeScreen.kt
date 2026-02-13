@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.mimi_projet_zentech.ui.theme.data.model.BusinessGroup
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 @Composable
@@ -55,6 +56,7 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                }
            ) {
                Icon(
+                   modifier = Modifier.padding(top = 12.dp),
                    imageVector = Icons.Default.ArrowBack,
                    contentDescription = "Back",
                    tint = Color.Black // You can customize the color here
@@ -108,7 +110,10 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                                 id= businessGroups.id ,
                                 name = businessGroups.name,
                                 offices = businessGroups.offices,
-                                totalBusinessCount = viewModel.businessGroups.size , navController
+                                totalBusinessCount = viewModel.businessGroups.size ,
+                                navController= navController ,
+                                viewModel=viewModel
+
                             )
                         }
                     }
@@ -120,14 +125,19 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
 
 @Composable
 fun MyBuisneCard(
-    id :Int ,
+    id: Int,
     name: String,
     offices: List<String>,
-    totalBusinessCount: Int , navController: NavController
+    totalBusinessCount: Int,
+    navController: NavController,
+    viewModel: HomeViewModel // <--- Add this parameter
 ) {
-    var officesShowing by remember { mutableStateOf(2) }
-    val isExpanded = officesShowing > 2
+    val isExpanded = viewModel.expandedCardIds[id] ?: false
+    val isLocationExpanded = viewModel.expandedLocationIds[id] ?: false
+
+    // Logic for cards
     val buisnesNumber = totalBusinessCount > 3
+    val officesShowing = if (isExpanded) offices.size else 2
 
     Card(
 
@@ -166,7 +176,7 @@ fun MyBuisneCard(
                     } else {
                         Row (
                             verticalAlignment = Alignment.CenterVertically  ,
-
+                            modifier = Modifier.clickable { viewModel.toggleLocationList(id) }
                         ) { Text(tag , fontSize = 11.sp , color = Color.Gray )
                             Text(text="." , color = Color(0xFF71717A) , fontSize = 30.sp , fontWeight = FontWeight.Bold,
                                 modifier = Modifier.offset(y = (-8).dp)
@@ -187,6 +197,21 @@ fun MyBuisneCard(
                     Text(text = "Access", color = Color.White)
                 }
             }
+            // NEW SECTION: Show offices when "locations" is clicked in compact mode
+            if (buisnesNumber && isLocationExpanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFF1F4FA),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        offices.forEach { office ->
+                            Text(text = "• $office", color = Color.DarkGray, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
 
             if (!buisnesNumber) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -199,17 +224,20 @@ fun MyBuisneCard(
                         offices.take(officesShowing).forEach { office ->
                             Text(text = office, color = Color.DarkGray, fontSize = 13.sp)
                         }
-
-                        Text(
-                            text = if (isExpanded) "Show less" else "+${offices.size - 2} more",
-                            color = Color(0xFF1D58D1),
-                            textDecoration = TextDecoration.Underline,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier
-                                .padding(top = 4.dp)
-                                .clickable { officesShowing = if (isExpanded) 2 else offices.size }
-                        )
+                        if(offices.size > 2) {
+                            Text(
+                                text = if (isExpanded) "Show less" else "+${offices.size - 2} more",
+                                color = Color(0xFF1D58D1),
+                                textDecoration = TextDecoration.Underline,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .clickable {
+                                        viewModel.toggleOfficeExpansion(id)
+                                    }
+                            )
+                        }
                     }
                 }
             }

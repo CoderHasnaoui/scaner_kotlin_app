@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.statusScreen
 
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,12 +29,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,14 +50,25 @@ import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.geBacgound
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.getIconDrawable
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.toTitle
+import com.example.mimi_projet_zentech.ui.theme.data.model.TicketInfo
+import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 
+var repository = HomeRepository()
 @Composable
-fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatus.NOT_FOUND) {
+fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatus.VALID , buisnesId :Int? , ticketNum :String? ) {
+
+
+    val ticket = remember(buisnesId, ticketNum) {
+        repository.getTicke(buisnesId, ticketNum)
+    }
+
+//    Toast.makeText(LocalContext.current, "Id  == $buisnesId + Tcket Num ==${ticketNum}" , Toast.LENGTH_LONG ).show()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
+//        Toast.makeText(LocalContext.current, "$ticket.name + ${ticket?.dateTime}" , Toast.LENGTH_LONG ).show()
 
         if (scanStatus != ScanStatus.NOT_FOUND) {
             // Ticket layout for VALID or ALREADY_SCANNED
@@ -91,14 +106,14 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
                         .padding(17.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    TicketRow("Name:", "Indriyani Puspita")
-                    TicketRow("Order Number:", "CLD09738PL")
-                    TicketRow("Date/Time:", "Tue, Oct 15 | 3:30 PM")
-                    TicketRow("Number of Personne", "32 Personne")
-                    TicketRow("Price:", "$320.00", isThelast = true)
+                    TicketRow("Name:", ticket?.name ?: "Unknown")
+                    TicketRow("Order Number:", ticket?.orderNumber ?: "N/A")
+                    TicketRow("Date/Time:", ticket?.dateTime ?: "N/A")
+                    TicketRow("Number of People:", "${ticket?.peopleCount} People")
+                    TicketRow("Price:", ticket?.price ?: "$0.00", isThelast = true)
                 }
             }
-
+            Spacer(Modifier.weight(1f))
         }
         else {
 
@@ -173,7 +188,7 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
 
 
         //try Buttom
-        tryAgainButton()
+        tryAgainButton(navController)
 
 
     }
@@ -235,9 +250,9 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
     }
 
     @Composable
-    fun tryAgainButton() {
+    fun tryAgainButton(navController: NavController) {
         Button(
-            onClick = { },
+            onClick = {navController.popBackStack() },
             modifier = Modifier
 
                 .fillMaxWidth()
