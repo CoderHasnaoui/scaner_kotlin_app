@@ -1,5 +1,5 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen
-
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -147,6 +148,11 @@ fun TopOptionsMenu(
         }
     }
 }
+
+
+
+
+
 @Composable
 fun ManualEntryDialog(
     show: Boolean,
@@ -154,24 +160,30 @@ fun ManualEntryDialog(
     onNext: (String) -> Unit
 ) {
     if (!show) return
-    var passId by remember { mutableStateOf("") }
 
-    Dialog(onDismissRequest = onDismiss) {
+    // Use rememberSaveable so text doesn't disappear on rotate
+    var passId by rememberSaveable { mutableStateOf("") }
 
+    Dialog(
+        onDismissRequest = onDismiss ,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+            // UsePlatformDefaultWidth = false allows the card to be wider if needed
+            usePlatformDefaultWidth = true
+        )
+    ) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), // Add some outer padding
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-
             Column(
-                modifier = Modifier
-                    .padding(20.dp),
+                modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -179,11 +191,15 @@ fun ManualEntryDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Trouble scanning? Enter manually",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "Trouble scanning?Enter manually", // Added newline for better fit
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f) // Give text room
                     )
 
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = {
+                        passId = "" // Clear text on close
+                        onDismiss()
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
@@ -193,17 +209,32 @@ fun ManualEntryDialog(
                     value = passId,
                     onValueChange = { passId = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter Pass ID") },
-                    singleLine = true
+                    placeholder = { Text("Enter Pass ID ") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 // Button
                 Button(
-                    onClick = { onNext(passId) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0XFF1851C5),
+                        disabledContainerColor = Color.Gray.copy(alpha = 0.5f) // Style for disabled
+                    ),
+                    onClick = {
+                        if (passId.isNotBlank()) {
+                            onNext(passId)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(50.dp)
+                    shape = RoundedCornerShape(50.dp),
+                    // 🔹 Only enable if user typed something
+                    enabled = passId.isNotBlank()
                 ) {
-                    Text("Next")
+                    Text(
+                        "Next",
+                        color = Color.White,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
             }
         }
