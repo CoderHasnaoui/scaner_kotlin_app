@@ -11,11 +11,15 @@ import com.journeyapps.barcodescanner.DefaultDecoderFactory
 
 @Composable
 fun ZxingQrScanner(
+    isFlashOn: Boolean,
+    isPaused: Boolean,
     onResult: (String) -> Unit
 ) {
     AndroidView(
         factory = { context ->
             DecoratedBarcodeView(context).apply {
+                // 🔹 FIX: Clear the default status text
+                setStatusText("")
                 barcodeView.decoderFactory =
                     DefaultDecoderFactory(listOf(BarcodeFormat.QR_CODE))
 
@@ -26,8 +30,21 @@ fun ZxingQrScanner(
                     }
                 }
 
-                resume()
             }
+        },
+        update = { view ->
+            // 🔹 This runs whenever isPaused changes
+
+            // Handle Pause/Resume
+            if (isPaused) view.pause() else view.resume()
+
+            // 🔹 Handle Flashlight
+            if (isFlashOn) {
+                view.setTorchOn()
+            } else {
+                view.setTorchOff()
+            }
+
         }
     )
 }

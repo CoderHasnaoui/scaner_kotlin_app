@@ -1,4 +1,7 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -9,28 +12,54 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
+import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+import android.provider.Settings
+import androidx.core.content.ContextCompat
+import android.Manifest
+import androidx.lifecycle.compose.LifecycleResumeEffect
 
 @Composable
-fun DeniedScreen(navController: NavController) {
-
+fun DeniedScreen(navController: NavController, businessId: Int?) {
+    val repository = remember { HomeRepository() }
+    val scope = rememberCoroutineScope()
     var showManualDialog by remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LifecycleResumeEffect(Unit) {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            // User just came back from settings and gave permission!
+            // Send them straight to the scanner.
+            navController.navigate(Screen.ScannerScreen.fullRoute(businessId)) {
+                popUpTo(Screen.DeniedScreen.route) { inclusive = true }
+            }
+        }
+
+        onPauseOrDispose { }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
 
         /* 🔹 TOP RIGHT MENU (ICON + DROPDOWN) */
@@ -39,11 +68,8 @@ Box( modifier = Modifier
     .align(Alignment.TopEnd)
     .padding(WindowInsets.statusBars.asPaddingValues())
     .padding(16.dp)){
-    TopOptionsMenu(navController)
+    TopOptionsMenu(navController , buisnesId =businessId)
 }
-
-
-
         /* 🔹 CENTER IMAGE */
         Image(
             painter = painterResource(R.drawable.denied_bg),
@@ -52,16 +78,39 @@ Box( modifier = Modifier
                 .size(260.dp)
                 .align(Alignment.Center)
         )
+
         ManualEntryDialog(
             show = showManualDialog,
             onDismiss = { showManualDialog = false },
             onNext = { passId ->
                 showManualDialog = false
-                // 👉 handle passId here
-                // navController.navigate(...)
+
+                // --- START OF THE "TACHE" (THE LOGIC) ---
+                val trimmed = passId.trim()
+                if (trimmed.isNotEmpty() && !isProcessing) {
+                    isProcessing = true
+                    scope.launch {
+                        delay(1200) // Beautiful Loader Duration
+
+                        // Call the repository exactly like ScannerScreen does
+                        val scanStatus = repository.scanTicket(businessId, passId.trim())
+
+                        val safeResult = android.net.Uri.encode(trimmed)
+
+                        // Navigate to the same Result Screen
+                        navController.navigate(
+                            Screen.ScanRes.getRoute(
+                                buisnisId = businessId,
+                                ticketNum = safeResult,
+                                scanRes = scanStatus
+                            )
+                        )
+                        isProcessing = false
+                    }
+
+                }
             }
         )
-
 
         /* 🔹 BOTTOM BUTTONS */
         Column(
@@ -91,13 +140,32 @@ Box( modifier = Modifier
             }
 
             Button(
-                onClick = { /* TODO: request camera permission */ },
+                onClick = {
+                    // 1. Check current status
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (hasPermission) {
+                        // 2. If they ALREADY accepted, go to Scanner
+                        navController.navigate(Screen.ScannerScreen.fullRoute(businessId)) {
+                            popUpTo(Screen.DeniedScreen.route) { inclusive = true }
+                        }
+                    } else {
+                        // 3. If they still haven't accepted, go to Settings
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
                 shape = RoundedCornerShape(45.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
+                    containerColor =MaterialTheme.colorScheme.background
                 ),
                 border = BorderStroke(1.dp, Color(0xFF1D58D1))
             ) {
@@ -110,7 +178,20 @@ Box( modifier = Modifier
         }
     }
 
-
+    if (isProcessing) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Verifying Pass ID...", color = Color.White)
+            }
+        }
+    }
 }
 
 
@@ -119,6 +200,7 @@ fun TopOptionsMenu(
     navController: NavController,
     modifier: Modifier = Modifier,
     iconColor: Color = Color.Black // Added this so you can change it for the camera screen
+    , buisnesId: Int?
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -128,7 +210,7 @@ fun TopOptionsMenu(
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "Menu",
-                tint = iconColor
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -136,13 +218,14 @@ fun TopOptionsMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
             shape = RoundedCornerShape(12.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.onBackground
         ) {
             DropdownMenuItem(
-                text = { Text("Profile", color = Color.Black) },
+                text = { Text("Profile", color = MaterialTheme.colorScheme.background) },
                 onClick = {
                     showMenu = false
-                    navController.navigate(Screen.Profile.route)
+                    val idToSend = buisnesId ?: -1
+                    navController.navigate(Screen.Profile.fullRoute(idToSend))
                 }
             )
         }
@@ -178,7 +261,7 @@ fun ManualEntryDialog(
                 .fillMaxWidth()
                 .padding(16.dp), // Add some outer padding
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -191,6 +274,7 @@ fun ManualEntryDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
+                        color = MaterialTheme.colorScheme.onBackground,
                         text = "Trouble scanning?Enter manually", // Added newline for better fit
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f) // Give text room

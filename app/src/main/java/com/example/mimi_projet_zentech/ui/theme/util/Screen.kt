@@ -7,6 +7,7 @@ sealed class Screen (val route :String) {
     object Splash : Screen("splash")
 
     object  Login : Screen("login"  )
+
     object  Home : Screen("home/{email}"  ){
         fun fullRoute(email : String):String{
         return "home/$email"
@@ -17,8 +18,17 @@ sealed class Screen (val route :String) {
             return "screen/$id"
         }
     }
-    object  DeniedScreen : Screen("denied")
-    object  Profile :Screen("profile")
+    object DeniedScreen : Screen("denied/{buisnesIs}") {
+        fun fullRoute(id: Int?): String {
+            return "denied/$id"
+        }
+    }
+    // Inside your Screen sealed class
+    object Profile : Screen("profile/{buisnesIs}") {
+        fun fullRoute(id: Int?): String {
+            return "profile/$id"
+        }
+    }
 //    object ScanStatus : Screen("statusScan")
     object  ScanRes : Screen("statusScan/{buisnisId}/{ticketNum}/{scanRes}"){
         fun getRoute(buisnisId: Int?, ticketNum: String?, scanRes: ScanStatus):String {

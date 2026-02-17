@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 
+import android.app.Activity
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,11 +23,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.ui.theme.data.model.BusinessGroup
@@ -38,7 +41,7 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
     val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier
-            .fillMaxSize().background(Color.White)
+            .fillMaxSize().background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)  .pointerInput(Unit) {
                 detectTapGestures(onTap = {
                     focusManager.clearFocus() // Hides keyboard when you tap the background
@@ -59,7 +62,7 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                    modifier = Modifier.padding(top = 12.dp),
                    imageVector = Icons.Default.ArrowBack,
                    contentDescription = "Back",
-                   tint = Color.Black // You can customize the color here
+                   tint = MaterialTheme.colorScheme.onBackground // You can customize the color here
                )
            }
        }
@@ -85,13 +88,14 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 16.dp),
-                lineHeight = 28.sp
+                lineHeight = 28.sp ,
+                color = MaterialTheme.colorScheme.onBackground
             )
         } else {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Box(modifier = Modifier.weight(1f)) {
+        Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
             when {
                 viewModel.noSearchResult-> {
                     NoSearchResultView()
@@ -103,7 +107,7 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(bottom = 24.dp)
+                        contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
                         items(viewModel.filteredBusinessGroups) { businessGroups ->
                             MyBuisneCard(
@@ -142,7 +146,7 @@ fun MyBuisneCard(
     Card(
 
         modifier = Modifier.fillMaxWidth().animateContentSize(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, Color(0x68FAFAFB)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -153,14 +157,14 @@ fun MyBuisneCard(
                     modifier = Modifier.size(40.dp),
                     shape = CircleShape,
 //                    color = Color.White,
-                    color =Color(0xFFE7E7E8)
+                    color =MaterialTheme.colorScheme.secondaryContainer
                    /* color = Color(0xFFF5F5F5)*/
                 ) {
                     Icon(
                         imageVector = Icons.Default.Business,
                         contentDescription = null,
                         modifier = Modifier.padding(10.dp),
-                        tint = Color.Black
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -192,7 +196,7 @@ fun MyBuisneCard(
                     },
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1851C5)),
-                    contentPadding = PaddingValues(horizontal = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 15.dp)
                 ) {
                     Text(text = "Access", color = Color.White)
                 }
@@ -222,7 +226,9 @@ fun MyBuisneCard(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         offices.take(officesShowing).forEach { office ->
-                            Text(text = office, color = Color.DarkGray, fontSize = 13.sp)
+                            Text(text = office,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                fontSize = 13.sp)
                         }
                         if(offices.size > 2) {
                             Text(
@@ -279,18 +285,18 @@ fun SearchTextFiled(searchText: String, onSearchChange: (String) -> Unit) {
 @Composable
 fun NoSearchResultView() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(Icons.Outlined.Search, null, modifier = Modifier.size(80.dp), tint = Color.LightGray)
-        Text("No Search Results", color = Color.Gray)
+        Text("No Search Results", color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
 @Composable
 fun EmptyStateView() {
-    Column( modifier = Modifier.fillMaxSize(),
+    Column( modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally )
     {

@@ -1,17 +1,21 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
+import android.app.Application
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mimi_projet_zentech.ui.theme.SignInStrings
 import com.example.mimi_projet_zentech.ui.theme.data.repository.SignInRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeScreen
 import com.example.mimi_projet_zentech.ui.theme.util.LoginResult
 import kotlinx.coroutines.launch
 
-class  SignInViewModel : ViewModel(){
+class  SignInViewModel (application: Application): AndroidViewModel(application){
     private  val repo  = SignInRepository()
     var email by mutableStateOf("")
         private set //
@@ -58,6 +62,14 @@ class  SignInViewModel : ViewModel(){
         val result = repo.login(email, password)
         when (result) {
             is LoginResult.Success -> {
+                val sharedPref = getApplication<Application>().getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE)
+                with(sharedPref.edit()) {
+                    putBoolean(SignInStrings.PRE_IS_LOGGED_IN, true)
+                    // You can also save the user's email if you want to show it on the Profile screen later
+                    putString(SignInStrings.PRE_USER_EMAIL, email)
+                    putString(SignInStrings.PRE_USER_PASSWORD, email)
+                    apply()
+                }
 //                loginMessage = result.message
                 navigateToHome = true
             }

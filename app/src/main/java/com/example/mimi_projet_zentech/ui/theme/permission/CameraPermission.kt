@@ -33,7 +33,10 @@ fun CameraPermission(
     ) { granted ->
         hasPermission = granted
         if (!granted){
-            navController.navigate(Screen.DeniedScreen.route)
+            navController.navigate(Screen.DeniedScreen.fullRoute(businessId)) {
+                // Pop the scanner screen so they don't go back to a black screen
+                popUpTo(Screen.ScannerScreen.route) { inclusive = true }
+            }
         }
     }
 

@@ -2,6 +2,7 @@ import android.net.Uri
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -30,7 +31,7 @@ fun ScannerScreen(navController: NavController, id: Int?) {
     // --- States ---
     var showManualDialog by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
-
+    var isFlashOn by remember { mutableStateOf(false) } // 🔹 Flash state
     val repository = remember { HomeRepository() }
     val scope = rememberCoroutineScope()
 
@@ -86,10 +87,16 @@ fun ScannerScreen(navController: NavController, id: Int?) {
     }
 
     // --- 3. UI LAYOUT ---
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).pointerInput(Unit){
+        detectTapGestures (
+            onLongPress = {
+                isFlashOn = !isFlashOn
+            }
+        )
+    }) {
 
         // Camera Background
-        ZxingQrScanner { result -> handleScanResult(result) }
+        ZxingQrScanner(isPaused = showManualDialog || isProcessing , isFlashOn = isFlashOn) { result -> handleScanResult(result) }
 
         // Top Menu
         TopOptionsMenu(
@@ -98,7 +105,8 @@ fun ScannerScreen(navController: NavController, id: Int?) {
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(WindowInsets.statusBars.asPaddingValues())
-                .padding(16.dp)
+                .padding(16.dp) ,
+            buisnesId = id
         )
 
         // Animated Frame & Laser Container
@@ -181,5 +189,24 @@ fun ScannerScreen(navController: NavController, id: Int?) {
                 }
             }
         }
+        if (isFlashOn) {
+            Text(
+                text = "Flash is Active ",
+                color = Color.Yellow.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 100.dp)
+            )
+        }  else  {
+        Text(
+            text = "Press longe to trun flash on ",
+            color = Color.Yellow.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 100.dp)
+        )
+    }
     }
 }

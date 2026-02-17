@@ -56,6 +56,9 @@ class HomeRepository {
         val business = businesses.find { it.id == buisnesId }
         return business?.tickets?.find { it.orderNumber == ticketNum }
     }
+    fun getBuisnesById(id:Int?): BusinessGroup? {
+        return  businesses.find { it.id == id }
+    }
 
 
 }

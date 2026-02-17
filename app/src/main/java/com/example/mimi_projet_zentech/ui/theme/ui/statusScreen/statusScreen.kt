@@ -1,4 +1,5 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.statusScreen
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 import com.example.mimi_projet_zentech.ui.theme.Poppins
+import com.example.mimi_projet_zentech.ui.theme.SignInStrings
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.geBacgound
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.getIconDrawable
@@ -54,18 +57,22 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
     val ticket = remember(buisnesId, ticketNum) {
         repository.getTicke(buisnesId, ticketNum)
     }
+    val context = LocalContext.current
+    val sharedPref = remember { context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE) }
 
+    // Read the value directly
+    val isDark = sharedPref.getBoolean("is_dark_mode", false)
 //    Toast.makeText(LocalContext.current, "Id  == $buisnesId + Tcket Num ==${ticketNum}" , Toast.LENGTH_LONG ).show()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
 //        Toast.makeText(LocalContext.current, "$ticket.name + ${ticket?.dateTime}" , Toast.LENGTH_LONG ).show()
 
         if (scanStatus != ScanStatus.NOT_FOUND) {
             // Ticket layout for VALID or ALREADY_SCANNED
-            curveStatus(scanStatus)
+            curveStatus(scanStatus )
 
             Column(Modifier.padding(horizontal = 26.dp)) {
                 Spacer(Modifier.height(12.dp))
@@ -73,7 +80,7 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
                     text = "JUMUAH Prayer Schedule",
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -81,12 +88,15 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 23.dp),
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 23.dp)
+
+                ,
                 contentAlignment = Alignment.TopCenter
             ) {
                 // Background paper
                 Image(
-                    painter = painterResource(id = R.drawable.payiment_paper),
+                    painter = painterResource(id = if(!isDark) R.drawable.payiment_paper else R.drawable.black_paper),
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.FillWidth
@@ -96,8 +106,10 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+
                         .padding(17.dp),
                     horizontalAlignment = Alignment.Start
+
                 ) {
                     TicketRow("Name:", ticket?.name ?: "Unknown")
                     TicketRow("Order Number:", ticket?.orderNumber ?: "N/A")
@@ -122,7 +134,9 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
             val iconTopOffset = backgroundSize * (52f / 209f)
 
             Column(
+
                 modifier = Modifier
+
                     .weight(1f)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -139,16 +153,22 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
                         contentDescription = null,
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier.fillMaxSize()
+
                     )
 
                     Icon(
-                        painter = painterResource(id = scanStatus.getIconDrawable()),
+
+                        painter = painterResource(id = scanStatus.getIconDrawable(isDark)),
+
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier
+
                             .width(iconWidth)
                             .height(iconHeight)
-                            .offset(y = iconTopOffset) // 👈 push icon down
+
+                            .offset(y = iconTopOffset)
+                    // 👈 push icon down
                     )
                 }
 
@@ -158,7 +178,7 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
                     text = "Tickets Not Found",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0XFF34343F) ,
+                    color = MaterialTheme.colorScheme.onBackground ,
                     fontFamily = Poppins
                 )
 
@@ -200,13 +220,13 @@ fun ValidScreen(navController: NavController, scanStatus: ScanStatus = ScanStatu
             Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
         if (!isThelast) HorizontalDivider(
-            modifier = Modifier.padding(vertical = 12.dp), // Space above and below the line
+            modifier = Modifier.padding(vertical = 5.dp), // Space above and below the line
             thickness = 0.5.dp,                           // Very thin for receipt look
             color = Color.LightGray.copy(alpha = 0.5f)    // Subtle color
         )
     }
     @Composable
-    fun curveStatus(status: ScanStatus) {
+    fun curveStatus(status: ScanStatus ) {
 
         Box(
             modifier = Modifier

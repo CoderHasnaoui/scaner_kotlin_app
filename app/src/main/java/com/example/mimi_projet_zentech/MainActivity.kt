@@ -1,6 +1,7 @@
 package com.example.mimi_projet_zentech
 
 import ScannerScreen
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,7 +11,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,17 +33,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.mimi_projet_zentech.ui.theme.MimiprojetzentechTheme
+import com.example.mimi_projet_zentech.ui.theme.NavigationsSeting
+import com.example.mimi_projet_zentech.ui.theme.SignInStrings
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.DeniedScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeScreen
@@ -50,157 +67,38 @@ import com.example.mimi_projet_zentech.ui.theme.util.NAV_ARG_EMAIL
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.permission.CameraPermission
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
-//        installSplashScreen()
+// This is okay, it lets Compose draw behind the bars
+
+   installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val sharedPref = getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE)
+//        val isDarkStored = sharedPref.getBoolean("is_dark_mode", false)
+
         setContent {
-            val insetsController =   WindowCompat.getInsetsController(window, window.decorView)
-                insetsController.isAppearanceLightStatusBars = true
-            insetsController.isAppearanceLightNavigationBars = true
+            val isDarkMode = remember {
+                mutableStateOf(sharedPref.getBoolean("is_dark_mode", false))
+            }
+//            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+//            insetsController.isAppearanceLightStatusBars = false
+//            insetsController.isAppearanceLightNavigationBars = false
 
-            NavigationsSeting() // this is get the Sign In scereen
-//            ScanPageScreen(insetsController)  // this is give the Scan of Buisnes  Screen
-//            CameraPermission {
-//                ScannerScreen(insetsController)
-//            }
-
+            MimiprojetzentechTheme(darkTheme = isDarkMode.value){
+            NavigationsSeting(isDarkMode)
         }
-    }
-}
-@Composable
-fun NavigationsSeting (){
-    val navController = rememberNavController()
-    NavHost(navController = navController , startDestination = Screen.Splash.route) {
-        composable (Screen.Splash.route) {
-            SplashScreen(navController = navController)
-        }
-        composable (Screen.Login.route) {
-
-          SignInScrenn(navController = navController)
-        }
-
-
-        composable(Screen.Home.route , arguments = listOf(navArgument(NAV_ARG_EMAIL) {
-                type = NavType.StringType
-            }))
-        {it->
-            val  email = it.arguments?.getString(NAV_ARG_EMAIL)
-
-               HomeScreen(navController , email)
-
-        }
-        composable(Screen.ScannerScreen.route , arguments = listOf(navArgument("buisnesIs"){
-            type = NavType.IntType
-        })) {  it->
-            val businessId =  it.arguments?.getInt("buisnesIs")
-            CameraPermission(
-                businessId ,
-                onGranted = { ScannerScreen(navController , businessId ) } ,
-                navController
-            )
-
-
-        }
-        composable (Screen.DeniedScreen.route ){
-            DeniedScreen(navController)
-        }
-        composable (Screen.Profile.route) {
-            profileScreen(navController = navController)
-        }
-//        composable(Screen.ScanStatus.route){
-//            ValidScreen(navController = navController )
-//        }
-        composable (Screen.ScanRes.route , arguments = listOf(navArgument("buisnisId")
-        {
-            type = NavType.IntType
-        } , navArgument("ticketNum"){
-            type = NavType.StringType
-        }, navArgument("scanRes"){
-            type = NavType.StringType
-        }
-        )){ it->
-            val businessId =  it.arguments?.getInt("buisnisId")
-            val ticketNum  = it.arguments?.getString("ticketNum")
-            val resString = it.arguments?.getString("scanRes") ?: "NOT_FOUND"
-            // Convert String back to Enum
-            val status = ScanStatus.valueOf(resString)
-            ValidScreen(navController = navController  , buisnesId = businessId , ticketNum = ticketNum , scanStatus = status)
-
-        }
-    }
-}
-@Composable
-fun SplashScreen(
-    navController: NavController
-) {
-    // Navigate after X seconds
-    LaunchedEffect(Unit) {
-        delay(3000) // 3 seconds
-        navController.navigate(Screen.Login.route) {
-            popUpTo(Screen.Login.route) { inclusive = true }
-        }
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-            PulsingLogo()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AnimatedDotsText(text = "Ticket Scanner")
         }
     }
 }
 
-@Composable
-fun AnimatedDotsText(
-    text: String,
-    modifier: Modifier = Modifier,
-    maxDots: Int = 3,
-    delayMillis: Long = 400
-) {
-    var dots by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            dots = (dots + 1) % (maxDots + 1)
-            delay(delayMillis)
-        }
-    }
 
-    Text(
-        text = text + ".".repeat(dots),
-        modifier = modifier,
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold
-    )
-}
 
-@Composable
-fun PulsingLogo() {
-    val scale by rememberInfiniteTransition().animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    Image(
-        painter = painterResource(id = R.drawable.splash_icon),
-        contentDescription = null,
-        modifier = Modifier
-            .size(120.dp)
-            .scale(scale)
-    )
-}
 

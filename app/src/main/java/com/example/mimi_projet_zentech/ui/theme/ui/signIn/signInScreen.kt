@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,12 +42,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -55,10 +59,11 @@ import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 @Composable
 fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavController) {
+    // Access the window to control the status bar
+
     val focusManager = LocalFocusManager.current
     if (viewModel.navigateToHome) {
-        // Navigate to home and pop the login screen off the backstack
-        // so the user can't go "back" to login after signing in
+
         var userDataWithRoute = Screen.Home.fullRoute(viewModel.email)
         navController.navigate(userDataWithRoute) {
             popUpTo(Screen.Login.route) { inclusive = true }
@@ -73,7 +78,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
 
             Column(modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)// Only this screen
+                .background(MaterialTheme.colorScheme.background)// Only this screen
                 .padding(20.dp)
                 .padding(vertical = 30.dp)
                 .pointerInput(Unit) {
@@ -86,13 +91,15 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                 ,){
                 Spacer(Modifier.height(24.dp))
                 Text(text = SignInStrings.SIGN_IN_TITLE,
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium ,
+                    color = MaterialTheme.colorScheme.onBackground
 
                 )
                 Spacer(Modifier.height(20.dp))
                 Text(text = SignInStrings.WELCOME_BACK ,
                     style = MaterialTheme.typography.bodySmall ,
-                    fontWeight = FontWeight.W100
+                    fontWeight = FontWeight.W100 ,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 // this is Eamail Filed
@@ -164,7 +171,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                     )
                     Text(
                         text = SignInStrings. SIGN_UP ,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -175,72 +182,3 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
 
 }
 
-@Composable
-fun SignInInput(
-    title: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    icon: ImageVector ,
-    isPasswordField: Boolean = false // this for pass Filed (status)  ,
-     , errorMessage: String? = null
-) {
-    var isVisible by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-    ) {
-
-        Text(
-            text = title,
-            color = Color.Gray,
-            style = MaterialTheme.typography.bodySmall
-        )
-
-        // 2. The Input Area
-        TextField(
-            supportingText = {
-                // This shows the red text below the field
-                if (errorMessage != null) {
-                    Text(text = errorMessage, color = ErrorRed)
-                }
-            },
-
-            isError = errorMessage != null,
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            /* Icons  */
-            leadingIcon = { Icon(icon, contentDescription = null ,      tint = Color(0xE1000000) )}, // Icon Strrt
-            trailingIcon = {
-
-                if (isPasswordField) { // this is for showing Icon(eye) when filed is  a password
-                    IconButton(onClick = { isVisible = !isVisible }) {
-                        Icon(
-                            imageVector = if (isVisible) SignIncon.EyeOpen else SignIncon.EyeClosed,
-                            contentDescription = "Toggle Visibility"
-                        )
-                    }
-                }
-            },
-
-            visualTransformation = if (isPasswordField && !isVisible) // this is for hide /show (text)
-                PasswordVisualTransformation()
-            else
-                VisualTransformation.None,
-
-
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent, // for Contaimner fcs
-                unfocusedContainerColor = Color.Transparent, // for Contaimner Unfcs
-                focusedIndicatorColor = Color.Black // for single bottom Ligne ,
-            , errorContainerColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-    }
-}
-object SignIncon {
-    val Email = Icons.Outlined.Email // this is For email
-    val Password = Icons.Outlined.Lock // this is for password
-    val EyeOpen = Icons.Outlined.Visibility
-    val EyeClosed = Icons.Outlined.VisibilityOff
-    val ArrowRight = Icons.Outlined.ArrowForward // this arrow Icon
-}

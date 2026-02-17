@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/https:/github.com/CoderHasnaoui/scaner_kotlin_app" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/https:/github.com/CoderHasnaoui/scaner_kotlin_app.git" vcs="Git" />
   </component>
 </project>
