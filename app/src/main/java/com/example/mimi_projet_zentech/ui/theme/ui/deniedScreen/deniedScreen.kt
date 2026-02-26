@@ -34,7 +34,7 @@ import android.Manifest
 import androidx.lifecycle.compose.LifecycleResumeEffect
 
 @Composable
-fun DeniedScreen(navController: NavController, businessId: Int?) {
+fun DeniedScreen(navController: NavController, ) {
     val repository = remember { HomeRepository() }
     val scope = rememberCoroutineScope()
     var showManualDialog by remember { mutableStateOf(false) }
@@ -49,7 +49,7 @@ fun DeniedScreen(navController: NavController, businessId: Int?) {
         if (hasPermission) {
             // User just came back from settings and gave permission!
             // Send them straight to the scanner.
-            navController.navigate(Screen.ScannerScreen.fullRoute(businessId)) {
+            navController.navigate(Screen.ScannerScreen.route) {
                 popUpTo(Screen.DeniedScreen.route) { inclusive = true }
             }
         }
@@ -68,7 +68,7 @@ Box( modifier = Modifier
     .align(Alignment.TopEnd)
     .padding(WindowInsets.statusBars.asPaddingValues())
     .padding(16.dp)){
-    TopOptionsMenu(navController , buisnesId =businessId)
+    TopOptionsMenu(navController )
 }
         /* 🔹 CENTER IMAGE */
         Image(
@@ -93,14 +93,14 @@ Box( modifier = Modifier
                         delay(1200) // Beautiful Loader Duration
 
                         // Call the repository exactly like ScannerScreen does
-                        val scanStatus = repository.scanTicket(businessId, passId.trim())
+                        val scanStatus = repository.scanTicket(1, passId.trim())
 
                         val safeResult = android.net.Uri.encode(trimmed)
 
                         // Navigate to the same Result Screen
                         navController.navigate(
                             Screen.ScanRes.getRoute(
-                                buisnisId = businessId,
+
                                 ticketNum = safeResult,
                                 scanRes = scanStatus
                             )
@@ -149,7 +149,7 @@ Box( modifier = Modifier
 
                     if (hasPermission) {
                         // 2. If they ALREADY accepted, go to Scanner
-                        navController.navigate(Screen.ScannerScreen.fullRoute(businessId)) {
+                        navController.navigate(Screen.ScannerScreen.route) {
                             popUpTo(Screen.DeniedScreen.route) { inclusive = true }
                         }
                     } else {
@@ -200,7 +200,7 @@ fun TopOptionsMenu(
     navController: NavController,
     modifier: Modifier = Modifier,
     iconColor: Color = Color.Black // Added this so you can change it for the camera screen
-    , buisnesId: Int?
+
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -224,8 +224,8 @@ fun TopOptionsMenu(
                 text = { Text("Profile", color = MaterialTheme.colorScheme.background) },
                 onClick = {
                     showMenu = false
-                    val idToSend = buisnesId ?: -1
-                    navController.navigate(Screen.Profile.fullRoute(idToSend))
+//                    val idToSend = buisnesId ?: -1
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }

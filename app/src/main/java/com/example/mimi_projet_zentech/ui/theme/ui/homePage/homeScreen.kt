@@ -1,6 +1,7 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -32,14 +33,55 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
 import com.example.mimi_projet_zentech.ui.theme.data.model.BusinessGroup
+import com.example.mimi_projet_zentech.ui.theme.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 @Composable
-fun HomeScreen(navController: NavController, data: String? , viewModel: HomeViewModel = viewModel() ) {
+fun HomeScreen(navController: NavController,   forceSelect: Boolean = false, viewModel: HomeViewModel = viewModel() ) {
+
+
+
+    BackHandler {
+        val previousRoute = navController.previousBackStackEntry?.destination?.route
+        if (previousRoute == Screen.Login.route || previousRoute == null) {
+            // came from login → exit app
+            (navController.context as? Activity)?.finish()
+        } else {
+            // came from profile → go back to profile
+            navController.popBackStack()
+        }
+    }
+    val context  = LocalContext.current
+val tokenManager =   remember { TokenManager(context) }
+    var isChecking by remember { mutableStateOf(true) }
 
     val focusManager = LocalFocusManager.current
-    Column(
+    LaunchedEffect(Unit) {
+        // 👇 slug already saved? go directly to scanner
+        val savedSlug = tokenManager.getSlug()
+        if (!forceSelect && !savedSlug.isNullOrEmpty()) {
+            navController.navigate(Screen.ScannerScreen.route) {
+                popUpTo(Screen.Home.route) { inclusive = false }
+            }
+            return@LaunchedEffect
+        }
+
+        // 👇 no slug saved → load merchants
+        viewModel.loadMerchants(
+            forceSelect = forceSelect,
+            onSingleMerchant = {
+                // only 1 merchant → auto navigate to scanner
+                navController.navigate(Screen.ScannerScreen.route) {
+                    popUpTo(Screen.Home.route) { inclusive = false }
+                }
+            }
+        )
+        isChecking = false
+    }
+    if (isChecking && !forceSelect) return
+        Column(
         modifier = Modifier
             .fillMaxSize().background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)  .pointerInput(Unit) {
@@ -97,11 +139,14 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
 
         Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
             when {
+                viewModel.isLoading -> {
+                    LoadingView()
+                }
                 viewModel.noSearchResult-> {
                     NoSearchResultView()
                 }
-                viewModel.isEmpty -> {
-                    EmptyStateView()
+                viewModel. merchantList.isEmpty() -> {
+                    EmptyStateView(onRefresh = { viewModel.loadMerchants() })
                 }
                 else -> {
                     LazyColumn(
@@ -109,14 +154,15 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(viewModel.filteredBusinessGroups) { businessGroups ->
+                        items(viewModel.filteredBusinessGroups) { marchent ->
                             MyBuisneCard(
-                                id= businessGroups.id ,
-                                name = businessGroups.name,
-                                offices = businessGroups.offices,
-                                totalBusinessCount = viewModel.businessGroups.size ,
+                                slug = marchent.slug,
+                                name = marchent.name,
+                                offices = marchent.locations,
+                                totalBusinessCount = viewModel.merchantList.size ,
                                 navController= navController ,
-                                viewModel=viewModel
+                                viewModel=viewModel ,
+                                tokenManager = tokenManager
 
                             )
                         }
@@ -129,15 +175,16 @@ fun HomeScreen(navController: NavController, data: String? , viewModel: HomeView
 
 @Composable
 fun MyBuisneCard(
-    id: Int,
+    slug :String ,
     name: String,
-    offices: List<String>,
+    offices: List<Location>,
     totalBusinessCount: Int,
     navController: NavController,
-    viewModel: HomeViewModel // <--- Add this parameter
+    viewModel: HomeViewModel , // <--- Add this parameter ,
+    tokenManager: TokenManager
 ) {
-    val isExpanded = viewModel.expandedCardIds[id] ?: false
-    val isLocationExpanded = viewModel.expandedLocationIds[id] ?: false
+    val isExpanded = viewModel.expandedCardIds[slug] ?: false
+    val isLocationExpanded = viewModel.expandedLocationIds[slug] ?: false
 
     // Logic for cards
     val buisnesNumber = totalBusinessCount > 3
@@ -180,7 +227,7 @@ fun MyBuisneCard(
                     } else {
                         Row (
                             verticalAlignment = Alignment.CenterVertically  ,
-                            modifier = Modifier.clickable { viewModel.toggleLocationList(id) }
+                            modifier = Modifier.clickable { viewModel.toggleLocationList(slug) }
                         ) { Text(tag , fontSize = 11.sp , color = Color.Gray )
                             Text(text="." , color = Color(0xFF71717A) , fontSize = 30.sp , fontWeight = FontWeight.Bold,
                                 modifier = Modifier.offset(y = (-8).dp)
@@ -191,8 +238,9 @@ fun MyBuisneCard(
 
                 Button(
                     onClick = {
+                        tokenManager.saveSlug(slug)
                        navController.navigate(
-                        Screen.ScannerScreen.fullRoute(id))
+                        Screen.ScannerScreen.route )
                     },
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1851C5)),
@@ -221,13 +269,14 @@ fun MyBuisneCard(
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         offices.take(officesShowing).forEach { office ->
-                            Text(text = office,
-                                color = MaterialTheme.colorScheme.surfaceContainer,
+                            Text(text = office.name ,
+//                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                color = MaterialTheme.colorScheme.onSurface ,
                                 fontSize = 13.sp)
                         }
                         if(offices.size > 2) {
@@ -240,7 +289,7 @@ fun MyBuisneCard(
                                 modifier = Modifier
                                     .padding(top = 4.dp)
                                     .clickable {
-                                        viewModel.toggleOfficeExpansion(id)
+                                        viewModel.toggleOfficeExpansion(slug)
                                     }
                             )
                         }
@@ -251,20 +300,16 @@ fun MyBuisneCard(
     }
 }
 
-@Composable
-fun ScannerScreen() {
-    TODO("Not yet implemented")
-}
+
 
 @Composable
 fun SearchTextFiled(searchText: String, onSearchChange: (String) -> Unit) {
-
-
     val leadingIcon: @Composable (() -> Unit)? = if (searchText.isEmpty()) {
         { Icon(Icons.Outlined.Search, contentDescription = null, tint = Color.Gray) }
     } else {
         null
     }
+
       OutlinedTextField(
           value = searchText,
           onValueChange = onSearchChange,
@@ -281,7 +326,6 @@ fun SearchTextFiled(searchText: String, onSearchChange: (String) -> Unit) {
       )
   }
 
-
 @Composable
 fun NoSearchResultView() {
     Column(
@@ -295,7 +339,7 @@ fun NoSearchResultView() {
 }
 
 @Composable
-fun EmptyStateView() {
+fun EmptyStateView(onRefresh :()->Unit) {
     Column( modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally )
@@ -306,9 +350,27 @@ fun EmptyStateView() {
         Text( text = "Oops! No business group was found.",
             color = Color.Gray, style = MaterialTheme.typography.bodyMedium )
         Spacer(modifier = Modifier.height(16.dp))
-        Button( onClick = {
-            // refresh button Logic
-        }, shape = RoundedCornerShape(20.dp),
+        Button( onClick =onRefresh, shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D58D1)) )
         { Text("Refresh", color = Color.White) } }
+}
+
+@Composable
+fun LoadingView() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(
+            color = Color(0xFF1D58D1),
+            strokeWidth = 4.dp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Fetching merchants...",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
+    }
 }

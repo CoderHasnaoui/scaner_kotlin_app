@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.mimi_projet_zentech.ui.theme.ErrorRed
 
 
@@ -36,7 +37,8 @@ fun SignInInput(
     onValueChange: (String) -> Unit,
     icon: ImageVector ,
     isPasswordField: Boolean = false // this for pass Filed (status)  ,
-    , errorMessage: String? = null
+    , errorMessage: String? = null ,
+    enableField: Boolean=true
 ) {
     var isVisible by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
@@ -50,10 +52,11 @@ fun SignInInput(
 
         // 2. The Input Area
         TextField(
+            enabled = enableField,
             supportingText = {
                 // This shows the red text below the field
                 if (errorMessage != null) {
-                    Text(text = errorMessage, color = ErrorRed)
+                    Text(text = errorMessage, color = ErrorRed ,)
                 }
             },
 
@@ -82,10 +85,24 @@ fun SignInInput(
 
 
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent, // for Contaimner fcs
-                unfocusedContainerColor = Color.Transparent, // for Contaimner Unfcs
-                focusedIndicatorColor = Color.Black // for single bottom Ligne ,
-                , errorContainerColor = Color.Transparent
+
+               focusedContainerColor = Color.Transparent, // for Contaimner fcs
+                unfocusedContainerColor = Color.Transparent,// for Contaimner Unfcs
+                disabledContainerColor = Color.Transparent,
+
+                focusedIndicatorColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),// for single bottom Ligne ,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f),
+                disabledIndicatorColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) ,
+                disabledTextColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+
+                errorContainerColor = Color.Transparent
+
             ),
             singleLine = true
         )

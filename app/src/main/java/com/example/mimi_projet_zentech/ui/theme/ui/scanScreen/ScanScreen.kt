@@ -1,4 +1,7 @@
+import android.app.Activity
 import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,30 +16,62 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
+import com.example.mimi_projet_zentech.ui.theme.data.local.SessionManager
+import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
+import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.ManualEntryDialog
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.ui.components.ZxingQrScanner
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 @Composable
-fun ScannerScreen(navController: NavController, id: Int?) {
+fun ScannerScreen(navController: NavController) {
     // --- States ---
     var showManualDialog by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
     var isFlashOn by remember { mutableStateOf(false) } // 🔹 Flash state
     val repository = remember { HomeRepository() }
     val scope = rememberCoroutineScope()
-
+    val token = TokenManager(LocalContext.current)
+    val slug = token.getSlug()
     // --- 1. INFINITE ANIMATION LOGIC ---
     val infiniteTransition = rememberInfiniteTransition(label = "scanner")
+    BackHandler {
+        val previousRoute = navController.previousBackStackEntry?.destination?.route
+
+        if (previousRoute == Screen.Home.route || previousRoute == null) {
+            // 👇 previous is Home or nothing → exit app
+            (navController.context as? Activity)?.finish()
+        } else {
+            // 👇 previous is Profile or Denied → go back normally
+            navController.popBackStack()
+        }
+    }
+    LaunchedEffect(Unit) {
+        val slug = token.getSlug()
+        if (!slug.isNullOrEmpty()) {
+            try {
+                val api = RetrofitInstance.getPrivateApi(
+                    token,
+                    onTokenExpired = { SessionManager.notifyTokenExpired() }
+                )
+                // just call it — don't care about the result
+                // if 401 → interceptor handles it → go to login
+                api.getLocations(slug)
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
 
     // Pulse Animation (Scale)
     val scale by infiniteTransition.animateFloat(
@@ -59,32 +94,49 @@ fun ScannerScreen(navController: NavController, id: Int?) {
     )
 
     // --- 2. SCAN HANDLER ---
+
+
     val handleScanResult = { result: String ->
         val trimmed = result.trim()
         if (trimmed.isNotEmpty() && !isProcessing) {
             isProcessing = true
             scope.launch {
-                delay(1200) // Beautiful Loader Duration
-
-                // Ignore links, mark as NOT_FOUND to avoid crashes
                 val isLink = trimmed.startsWith("http") || trimmed.startsWith("www")
-                val scanStatus = if (isLink) ScanStatus.NOT_FOUND
-                else repository.scanTicket(id, orderNumber = trimmed)
+                val scanStatus: ScanStatus = if (isLink) {
+                    ScanStatus.NOT_FOUND
+                } else {
+                    try {
+                        val api = RetrofitInstance.getPrivateApi(token)
 
-                // Uri.encode ensures slashes "/" don't break the navigation route
+                        val response = api.checkTicket(trimmed)
+
+                        if (response.isSuccessful) {
+                            val ticket = response.body()
+                            if (ticket != null) {
+                                if (ticket.isScanned == true) {
+                                    ScanStatus.ALREADY_SCANNED
+                                } else {
+                                    ScanStatus.VALID
+                                }
+                            } else {
+                                ScanStatus.NOT_FOUND
+                            }
+                        } else {
+                            ScanStatus.NOT_FOUND
+                        }
+                    } catch (e: Exception) {
+                        Log.e("SCAN_DEBUG", "EXCEPTION: ${e.message}", e)
+                        ScanStatus.NOT_FOUND
+                    }
+                }
+
                 val safeResult = Uri.encode(trimmed)
-
-                navController.navigate(
-                    Screen.ScanRes.getRoute(
-                        buisnisId = id,
-                        ticketNum = safeResult,
-                        scanRes = scanStatus
-                    )
-                )
+                navController.navigate(Screen.ScanRes.getRoute(ticketNum = safeResult, scanRes = scanStatus))
                 isProcessing = false
             }
         }
     }
+
 
     // --- 3. UI LAYOUT ---
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).pointerInput(Unit){
@@ -106,7 +158,7 @@ fun ScannerScreen(navController: NavController, id: Int?) {
                 .align(Alignment.TopEnd)
                 .padding(WindowInsets.statusBars.asPaddingValues())
                 .padding(16.dp) ,
-            buisnesId = id
+
         )
 
         // Animated Frame & Laser Container

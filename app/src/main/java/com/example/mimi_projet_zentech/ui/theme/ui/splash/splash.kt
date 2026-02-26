@@ -46,7 +46,7 @@ fun SplashScreen(navController: NavController , isLoggedIn : Boolean) {
                 // Get the saved email to pass to Home
                 val sharedPref = context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE)
                 val email = sharedPref.getString(SignInStrings.PRE_USER_EMAIL, "") ?: ""
-                var userDataWithRoute = Screen.Home.fullRoute(email)
+                var userDataWithRoute = Screen.Home.getRoute()
                 navController.navigate(userDataWithRoute) {
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }

@@ -34,7 +34,6 @@ val trapVeganTickets = mutableListOf<TicketInfo>(
         orderNumber = "TV-003"
     )
 )
-
 val perfectPitaTickets = listOf(
     TicketInfo(
         name = "David",
@@ -51,7 +50,6 @@ val perfectPitaTickets = listOf(
         orderNumber = "PP-002"
     )
 )
-
 val papaLocosTicket = listOf(
     TicketInfo(
         name = "Indriyani Puspita",
