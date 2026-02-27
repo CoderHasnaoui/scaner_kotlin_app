@@ -10,10 +10,16 @@ import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
 import com.example.mimi_projet_zentech.ui.theme.data.model.GroupeMerchant.MerchantGroup
 import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.ui.theme.data.repository.AuthRepository
+import com.example.mimi_projet_zentech.ui.theme.ui.signIn.UserRepository
+import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
      val tokenManager = TokenManager(application)
+    private val userRepository = UserRepository(getApplication<Application>().dataStore)
 
     // UI States
     var selectedMerchant by mutableStateOf<MerchantGroup?>(null)
@@ -21,21 +27,31 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var isLoading by mutableStateOf(false)
         private set
 
-    var userName by mutableStateOf("Loading...")
-    var userEmail by mutableStateOf("Loading...")
-        val userInitial:String
-        get() {
-            if (userName == "Loading..." || userName.isBlank()) return "--"
+    val userName: StateFlow<String> = userRepository.name
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "Loading..."
+        )
 
-            val parts = userName.trim().split(" ")
+    val userEmail: StateFlow<String> = userRepository.email
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "Loading..."
+        )
+
+    val userInitial: String
+        get() {
+            if (userName.value == "Loading..." || userName.value.isBlank()) return "--"
+            val parts = userName.value.trim().split(" ")
             return if (parts.size >= 2) {
-                // Take 1 letter and second lettre
                 "${parts[0].firstOrNull() ?: ""}${parts[1].firstOrNull() ?: ""}".uppercase()
             } else {
-                // Just one Letter
-                "${userName.firstOrNull() ?: ""}".uppercase()
+                "${userName.value.firstOrNull() ?: ""}".uppercase()
             }
         }
+
 
 //    init {
 //        userEmail = tokenManager.getEmail() ?: "User@email.com"
@@ -43,7 +59,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun loadProfileData() {
         // CACHE: If data is already loaded, don't hit the API again
-        if (selectedMerchant != null && userEmail != "Loading...") return
+        if (selectedMerchant != null )return
 
 
         viewModelScope.launch {
@@ -52,12 +68,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 // Get the private API using the token
                 val api = RetrofitInstance.getPrivateApi(tokenManager)
                 // 1. Fetch User Info (New)
-                val userResponse = api.getProfile()
-                if (userResponse.isSuccessful) {
-                    val user = userResponse.body()
-                    userName = user?.name ?: ""
-                    userEmail = user?.email ?: ""
-                }
+//
 
                 val slug = tokenManager.getSlug()
                 if (slug != null) {
@@ -69,7 +80,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 // Fetch specific merchant from the API list
 
             } catch (e: Exception) {
-                userName = "Error loading"
+//                userName = "Error loading"
+
             } finally {
                 isLoading = false
             }

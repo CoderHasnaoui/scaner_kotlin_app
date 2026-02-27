@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
@@ -38,11 +39,47 @@ import com.example.mimi_projet_zentech.ui.theme.data.model.BusinessGroup
 import com.example.mimi_projet_zentech.ui.theme.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
+
 @Composable
 fun HomeScreen(navController: NavController,   forceSelect: Boolean = false, viewModel: HomeViewModel = viewModel() ) {
 
 
 
+
+    val context  = LocalContext.current
+val tokenManager =   remember { TokenManager(context) }
+    var isChecking by remember { mutableStateOf(true) }
+
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(Unit) {
+        val savedSlug = tokenManager.getSlug()
+
+        if (!forceSelect && !savedSlug.isNullOrEmpty()) {
+            navController.navigate(Screen.ScannerScreen.route) {
+                popUpTo(Screen.Home.route) { inclusive = false }
+            }
+            return@LaunchedEffect  // 👈 never set isChecking = false → screen stays blank
+        }
+
+        // no slug → now load merchants and show UI
+        isChecking = false  // 👈 show UI first
+        viewModel.loadMerchants(
+            forceSelect = forceSelect,
+            onSingleMerchant = {
+                navController.navigate(Screen.ScannerScreen.route) {
+                    popUpTo(Screen.Home.route) { inclusive = false }
+                }
+            }
+        )
+    }
+    if (isChecking) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+        return  // 👈 this return works because it's not inside a lambda
+    }
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
         if (previousRoute == Screen.Login.route || previousRoute == null) {
@@ -53,34 +90,7 @@ fun HomeScreen(navController: NavController,   forceSelect: Boolean = false, vie
             navController.popBackStack()
         }
     }
-    val context  = LocalContext.current
-val tokenManager =   remember { TokenManager(context) }
-    var isChecking by remember { mutableStateOf(true) }
 
-    val focusManager = LocalFocusManager.current
-    LaunchedEffect(Unit) {
-        // 👇 slug already saved? go directly to scanner
-        val savedSlug = tokenManager.getSlug()
-        if (!forceSelect && !savedSlug.isNullOrEmpty()) {
-            navController.navigate(Screen.ScannerScreen.route) {
-                popUpTo(Screen.Home.route) { inclusive = false }
-            }
-            return@LaunchedEffect
-        }
-
-        // 👇 no slug saved → load merchants
-        viewModel.loadMerchants(
-            forceSelect = forceSelect,
-            onSingleMerchant = {
-                // only 1 merchant → auto navigate to scanner
-                navController.navigate(Screen.ScannerScreen.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                }
-            }
-        )
-        isChecking = false
-    }
-    if (isChecking && !forceSelect) return
         Column(
         modifier = Modifier
             .fillMaxSize().background(MaterialTheme.colorScheme.background)

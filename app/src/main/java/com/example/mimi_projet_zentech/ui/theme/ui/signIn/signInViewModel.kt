@@ -26,6 +26,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
     private val authApi = RetrofitInstance.publicApi
     private val repository = AuthRepository(authApi)
 
+    private val userRepository = UserRepository(getApplication<Application>().dataStore)
 
     //    private val  repository  = AuthRepository()
     var email by mutableStateOf("")
@@ -93,10 +94,17 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                     if (response.isSuccessful) {
                         val data = response.body()
                         val token = data?.token
-
+                        val name = data?.user?.name?:"unknow "
+                        val emailApi  = data?.user?.email?:"exemple@gmail.com"
+//                        val email = data?.user?.email?:"unknow "
                         if (token != null) {
 //                    tokenManager.saveToken(token)
-                            tokenManager.saveUserData(email, token)
+                            tokenManager.saveToken(token)
+
+                            viewModelScope.launch {
+                                userRepository.saveUserInfo(name , emailApi)
+                            }
+
                             loginMessage = "Loading ....."
                             navigateToHome = true
                         } else {

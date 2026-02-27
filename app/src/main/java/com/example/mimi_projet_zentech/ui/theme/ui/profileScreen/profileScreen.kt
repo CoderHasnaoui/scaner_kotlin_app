@@ -42,6 +42,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
@@ -61,7 +62,8 @@ fun profileScreen(
 ) {
     val context = LocalContext.current
     val sharedPref = remember { context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE) }
-
+    val userName by viewModel.userName.collectAsStateWithLifecycle()
+    val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
     // Trigger API load once
     LaunchedEffect(Unit) {
         viewModel.loadProfileData()
@@ -104,8 +106,8 @@ fun profileScreen(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(viewModel.userName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(viewModel.userEmail, color = Color.Gray, fontSize = 14.sp)
+                        Text(userName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(userEmail, color = Color.Gray, fontSize = 14.sp)
                     }
                 }
             }

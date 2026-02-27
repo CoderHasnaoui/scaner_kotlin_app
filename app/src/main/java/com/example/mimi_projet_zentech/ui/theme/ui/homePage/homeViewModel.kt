@@ -42,7 +42,7 @@ class HomeViewModel (application : Application): AndroidViewModel(application){
 
     init {
 //        loadBusinessGroups()
-            loadMerchants() // Fetch as soon as the Home Page opens
+//            loadMerchants() // Fetch as soon as the Home Page opens
 
     }
 

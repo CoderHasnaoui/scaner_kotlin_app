@@ -3,7 +3,7 @@ package com.example.mimi_projet_zentech.ui.theme.data.remote
 import androidx.compose.ui.platform.LocalContext
 import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
 import com.example.mimi_projet_zentech.ui.theme.data.model.Env
-import com.example.mimi_projet_zentech.ui.theme.data.model.Login.AuthApi
+import com.example.mimi_projet_zentech.ui.theme.data.remote.AuthApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -51,6 +51,7 @@ object RetrofitInstance {
             .addConverterFactory(gsonConverter)
             .build()
             .create(AuthApi::class.java)
+
     }
 
     fun getPrivateApi(

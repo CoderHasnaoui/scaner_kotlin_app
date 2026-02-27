@@ -38,6 +38,10 @@ android {
     }
 }
 dependencies {
+    // encrypted shared pre
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     // scanning barcode
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("androidx.camera:camera-camera2:1.3.0")
@@ -102,6 +106,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.camera.camera2.pipe)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.datastore.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
