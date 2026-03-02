@@ -1,6 +1,7 @@
 package com.example.mimi_projet_zentech.ui.theme
 
 import ScannerScreen
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -30,6 +31,7 @@ import com.example.mimi_projet_zentech.ui.theme.util.NAV_ARG_EMAIL
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.permission.CameraPermission
 
+@SuppressLint("RememberReturnType")
 @Composable
 fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val context = LocalContext.current
@@ -37,14 +39,20 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val navController = rememberNavController()
     val tokenManager = remember { TokenManager(context) }
     val isLoggedIn = remember { tokenManager.isLoggedIn() }
-
-    LaunchedEffect(Unit) {
+    remember {
         SessionManager.onTokenExpired = {
             navController.navigate(Screen.Login.route) {
                 popUpTo(0) { inclusive = true }
             }
         }
     }
+//    LaunchedEffect(Unit) {
+//        SessionManager.onTokenExpired = {
+//            navController.navigate(Screen.Login.route) {
+//                popUpTo(0) { inclusive = true }
+//            }
+//        }
+//    }
 
     NavHost(navController = navController , startDestination = Screen.Splash.route) {
         composable (Screen.Splash.route) {

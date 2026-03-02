@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 import com.example.mimi_projet_zentech.ui.theme.Poppins
@@ -57,9 +59,6 @@ import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.curve
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.tryAgainButton
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.formatApiDate
 
-
-
-
 @Composable
 fun ValidScreen(
     navController: NavController,
@@ -69,26 +68,27 @@ fun ValidScreen(
     val context = LocalContext.current
     val sharedPref = remember { context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE) }
     val isDark = sharedPref.getBoolean("is_dark_mode", false)
-    val tokenManager = remember { TokenManager(context) }
 
-    var ticket by remember { mutableStateOf<TicketInfos?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    val viewModel: ValidViewModel = viewModel()
+
+
+
+
 
     LaunchedEffect(ticketNum) {
-        if (scanStatusInitial != ScanStatus.NOT_FOUND && !ticketNum.isNullOrEmpty()) {
-            try {
-                val api = RetrofitInstance.getPrivateApi(tokenManager)
-                val response = api.checkTicket(ticketNum)
-                if (response.isSuccessful) {
-                    ticket = response.body()
-                }
-            } catch (e: Exception) { }
-        }
-        isLoading = false
+        viewModel.loadTicket(ticketNum, scanStatusInitial)
     }
 
+    if (!viewModel.isReady) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+        return
+    }
 
-    if (isLoading) {
+    if (viewModel.isLoading) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,7 +113,7 @@ fun ValidScreen(
             Column(Modifier.padding(horizontal = 26.dp)) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = ticket?.name ?: "Unknown",
+                    text = viewModel.ticket?.name ?: "Unknown",
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -140,11 +140,11 @@ fun ValidScreen(
                         .padding(17.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    TicketRow("Name:", ticket?.ownerName ?: "Unknown")
-                    TicketRow("Order Number:", ticket?.orderNumber ?: "N/A")
-                    TicketRow("Date/Time:", formatApiDate(ticket?.dateTime))
-                    TicketRow("Number of People:", "${ticket?.nbOfPersons ?: 0} People")
-                    TicketRow("Price:", "$${ticket?.amount ?: "0.00"}", isThelast = true)
+                    TicketRow("Name:", viewModel.ticket?.ownerName ?: "Unknown")
+                    TicketRow("Order Number:", viewModel.ticket?.orderNumber ?: "N/A")
+                    TicketRow("Date/Time:", formatApiDate(viewModel.ticket?.dateTime))
+                    TicketRow("Number of People:", "${viewModel.ticket?.nbOfPersons ?: 0} People")
+                    TicketRow("Price:", "$${viewModel.ticket?.amount ?: "0.00"}", isThelast = true)
                 }
             }
 

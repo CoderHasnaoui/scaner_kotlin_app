@@ -8,8 +8,10 @@ import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
@@ -22,23 +24,26 @@ import com.google.mlkit.vision.barcode.common.Barcode
 fun ZxingQrScanner(
     isFlashOn: Boolean,
     isPaused: Boolean,
-    onResult: (String) -> Unit
+    onResult: (String) -> Unit ,
+    onLongPress: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
     val cameraController = remember { LifecycleCameraController(context) }
-
+    var isCameraReady by remember { mutableStateOf(false) }
     LaunchedEffect(isPaused) {
         if (isPaused) {
             cameraController.unbind()
+            isCameraReady = false
         } else {
             cameraController.bindToLifecycle(lifecycleOwner)
+            isCameraReady =  true
         }
     }
 
-    LaunchedEffect(isFlashOn) {
-        cameraController.enableTorch(isFlashOn)
+    LaunchedEffect(isFlashOn , isCameraReady) {
+        if(isCameraReady)cameraController.enableTorch(isFlashOn)
     }
 
     LaunchedEffect(Unit) {
@@ -72,10 +77,18 @@ fun ZxingQrScanner(
 
         cameraController.bindToLifecycle(lifecycleOwner)
         previewView.controller = cameraController
+        isCameraReady = true
     }
 
     AndroidView(
         factory = { previewView },
+        update = { view ->
+
+            view.setOnLongClickListener {
+                onLongPress()
+                true
+            }
+        },
         modifier = Modifier.fillMaxSize()
     )
 }

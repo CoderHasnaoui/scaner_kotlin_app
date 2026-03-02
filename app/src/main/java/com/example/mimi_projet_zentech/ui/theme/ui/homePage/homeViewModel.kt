@@ -26,7 +26,7 @@ class HomeViewModel (application : Application): AndroidViewModel(application){
     var merchantList by mutableStateOf<List<MerchantGroup>>(emptyList())
     var isLoading by mutableStateOf(false)
     private val merchantApi = RetrofitInstance.getPrivateApi(tokenManager ,  onTokenExpired = { SessionManager.notifyTokenExpired()} )
-    private val repo = AuthRepository(merchantApi)
+    private val repo = MerchantRepository(merchantApi)
 
 
     var expandedCardIds = mutableStateMapOf<String, Boolean>()
@@ -58,7 +58,7 @@ class HomeViewModel (application : Application): AndroidViewModel(application){
         viewModelScope.launch {
             isLoading = true
             try {
-                val response = repo.fetchMerchnat()
+                val response = repo.getMerchants()
                 if (response.isSuccessful) {
                     merchantList = response.body() ?: emptyList()
 

@@ -19,6 +19,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 import com.example.mimi_projet_zentech.ui.theme.data.local.SessionManager
@@ -28,6 +30,7 @@ import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.ManualEntryDialog
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
+import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.ui.components.ZxingQrScanner
 import kotlinx.coroutines.launch
@@ -37,42 +40,44 @@ import java.lang.Exception
 fun ScannerScreen(navController: NavController) {
     // --- States ---
     var showManualDialog by remember { mutableStateOf(false) }
-    var isProcessing by remember { mutableStateOf(false) }
     var isFlashOn by remember { mutableStateOf(false) } // 🔹 Flash state
-    val repository = remember { HomeRepository() }
-    val scope = rememberCoroutineScope()
-    val token = TokenManager(LocalContext.current)
-    val slug = token.getSlug()
+    var  viewModel: ScanViewMode = viewModel ()
+
+
     // --- 1. INFINITE ANIMATION LOGIC ---
     val infiniteTransition = rememberInfiniteTransition(label = "scanner")
+
+    LaunchedEffect(Unit) {
+        viewModel.resetState()
+        viewModel.checkToken()
+        viewModel.onNavigate = {ticketNum  ,scanStatus ->
+            navController.navigate(
+                Screen.ScanRes.getRoute(ticketNum = ticketNum, scanRes = scanStatus)
+            )
+
+        }
+    }
+    // waiting response from Api to see if token Expired
+    if (!viewModel.isReady) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+        return
+    }
+
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
 
         if (previousRoute == Screen.Home.route || previousRoute == null) {
-            // 👇 previous is Home or nothing → exit app
+            //   previeus  is Home or none so  exit app
             (navController.context as? Activity)?.finish()
         } else {
-            // 👇 previous is Profile or Denied → go back normally
+            //  previous is Profile or Denied  back
             navController.popBackStack()
         }
     }
-    LaunchedEffect(Unit) {
-        val slug = token.getSlug()
-        if (!slug.isNullOrEmpty()) {
-            try {
-                val api = RetrofitInstance.getPrivateApi(
-                    token,
-                    onTokenExpired = { SessionManager.notifyTokenExpired() }
-                )
-                // just call it — don't care about the result
-                // if 401 → interceptor handles it → go to login
-                api.getLocations(slug)
-            } catch (e: Exception) {
-                // ignore
-            }
-        }
-    }
-
     // Pulse Animation (Scale)
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.98f,
@@ -96,60 +101,21 @@ fun ScannerScreen(navController: NavController) {
     // --- 2. SCAN HANDLER ---
 
 
-    val handleScanResult = { result: String ->
-        val trimmed = result.trim()
-        if (trimmed.isNotEmpty() && !isProcessing) {
-            isProcessing = true
-            scope.launch {
-                val isLink = trimmed.startsWith("http") || trimmed.startsWith("www")
-                val scanStatus: ScanStatus = if (isLink) {
-                    ScanStatus.NOT_FOUND
-                } else {
-                    try {
-                        val api = RetrofitInstance.getPrivateApi(token)
 
-                        val response = api.checkTicket(trimmed)
-
-                        if (response.isSuccessful) {
-                            val ticket = response.body()
-                            if (ticket != null) {
-                                if (ticket.isScanned == true) {
-                                    ScanStatus.ALREADY_SCANNED
-                                } else {
-                                    ScanStatus.VALID
-                                }
-                            } else {
-                                ScanStatus.NOT_FOUND
-                            }
-                        } else {
-                            ScanStatus.NOT_FOUND
-                        }
-                    } catch (e: Exception) {
-                        Log.e("SCAN_DEBUG", "EXCEPTION: ${e.message}", e)
-                        ScanStatus.NOT_FOUND
-                    }
-                }
-
-                val safeResult = Uri.encode(trimmed)
-                navController.navigate(Screen.ScanRes.getRoute(ticketNum = safeResult, scanRes = scanStatus))
-                isProcessing = false
-            }
-        }
-    }
 
 
     // --- 3. UI LAYOUT ---
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).pointerInput(Unit){
-        detectTapGestures (
-            onLongPress = {
-                isFlashOn = !isFlashOn
-            }
-        )
-    }) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+
+    ) {
 
         // Camera Background
-        ZxingQrScanner(isPaused = showManualDialog || isProcessing , isFlashOn = isFlashOn) { result -> handleScanResult(result) }
-
+        ZxingQrScanner(
+            isPaused = showManualDialog || viewModel.isProcessing,
+            isFlashOn = isFlashOn,
+            onLongPress = { isFlashOn = !isFlashOn },
+            onResult = { result -> viewModel.handleScanResult(result) }
+        )
         // Top Menu
         TopOptionsMenu(
             navController = navController,
@@ -204,7 +170,7 @@ fun ScannerScreen(navController: NavController) {
             onDismiss = { showManualDialog = false },
             onNext = { passId ->
                 showManualDialog = false
-                handleScanResult(passId)
+                viewModel.handleScanResult(passId)
             }
         )
 
@@ -227,7 +193,7 @@ fun ScannerScreen(navController: NavController) {
         }
 
         // VERIFYING LOADER OVERLAY
-        if (isProcessing) {
+        if (viewModel.isProcessing) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -241,24 +207,11 @@ fun ScannerScreen(navController: NavController) {
                 }
             }
         }
-        if (isFlashOn) {
-            Text(
-                text = "Flash is Active ",
-                color = Color.Yellow.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 100.dp)
-            )
-        }  else  {
         Text(
-            text = "Press longe to trun flash on ",
+            text = if (isFlashOn) "Flash is Active" else "Press long to turn flash on",
             color = Color.Yellow.copy(alpha = 0.7f),
             style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 100.dp)
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)
         )
-    }
     }
 }
