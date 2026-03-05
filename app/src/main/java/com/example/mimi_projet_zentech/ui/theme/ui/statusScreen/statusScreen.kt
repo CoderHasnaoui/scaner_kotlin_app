@@ -46,14 +46,11 @@ import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 import com.example.mimi_projet_zentech.ui.theme.Poppins
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
+import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.geBacgound
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.getIconDrawable
-import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.toTitle
-import com.example.mimi_projet_zentech.ui.theme.data.model.Ticket.TicketInfos
-import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
-import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
+
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.TicketRow
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.curveStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.tryAgainButton
@@ -66,8 +63,7 @@ fun ValidScreen(
     ticketNum: String?
 ) {
     val context = LocalContext.current
-    val sharedPref = remember { context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE) }
-    val isDark = sharedPref.getBoolean("is_dark_mode", false)
+
 
     val viewModel: ValidViewModel = viewModel()
 
@@ -129,7 +125,7 @@ fun ValidScreen(
                 contentAlignment = Alignment.TopCenter
             ) {
                 Image(
-                    painter = painterResource(id = if (!isDark) R.drawable.payiment_paper else R.drawable.black_paper),
+                    painter = painterResource(id = if (!viewModel.isDark) R.drawable.payiment_paper else R.drawable.black_paper),
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.FillWidth
@@ -144,7 +140,8 @@ fun ValidScreen(
                     TicketRow("Order Number:", viewModel.ticket?.orderNumber ?: "N/A")
                     TicketRow("Date/Time:", formatApiDate(viewModel.ticket?.dateTime))
                     TicketRow("Number of People:", "${viewModel.ticket?.nbOfPersons ?: 0} People")
-                    TicketRow("Price:", "$${viewModel.ticket?.amount ?: "0.00"}", isThelast = true)
+
+                    TicketRow("Price:", if(viewModel.ticket?.amount==0.0) "Free Ticket"  else "$${viewModel.ticket?.amount ?: "0.00"}"  , isThelast = true)
                 }
             }
 
@@ -176,7 +173,7 @@ fun ValidScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                     Icon(
-                        painter = painterResource(id = scanStatusInitial.getIconDrawable(isDark)),
+                        painter = painterResource(id = scanStatusInitial.getIconDrawable(viewModel.isDark)),
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier

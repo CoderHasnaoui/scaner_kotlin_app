@@ -64,14 +64,16 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
 
     val focusManager = LocalFocusManager.current
 
-    // Navigate if login is successful
-    if (viewModel.navigateToHome) {
-        var userDataWithRoute = Screen.Home.getRoute()
-        navController.navigate(userDataWithRoute) {
-            popUpTo(Screen.Login.route) { inclusive = true }
+    LaunchedEffect(Unit) {
+        viewModel.onLoginSuccess = {
+            navController.navigate(Screen.Home.getRoute()) {
+                popUpTo(Screen.Login.route) { inclusive = true }
+            }
         }
-        viewModel.onNavigationDone()
     }
+    // Navigate if login is successful
+
+
     // ---  Main Screen ---
             Column(modifier = Modifier
                 .fillMaxSize()
@@ -127,7 +129,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                 }
                 Spacer(modifier = Modifier.height(5.dp))
                 // Sign In Button
-                TextButton(  {viewModel.onSignInClicked()},
+                TextButton(  onClick = {viewModel.onSignInClicked()},
                     enabled = !viewModel.isLoading,
 
                     modifier = Modifier

@@ -14,6 +14,12 @@ object SignInStrings {
     const val PRE_LOGGIN_NAME ="user_prefs"
 
 }
+object TokenStrings {
+    const val IS_LOGIN = "ISLOGIN"
+    const val  SELECTE_SLUG = "SLUG"
+     const  val PREFS_TOKEN_NAME = "my_prefs"
+    const val PREFE_SLUG_NAME = "pre_slug"
+}
 object HomeStrings{
 
     const val MAIN_HOME  ="Select the Buisness Groupe that is hosting the event"
@@ -21,4 +27,8 @@ object HomeStrings{
     const val REFRECH_BTN = "Refrech"
     const val ACCESS_BTN = "Access"
 
+}
+object AppSettings{
+    const val DARK_MODE =  "app_settings_pre"
+    const val IS_DARK_MODE = "is_dark_mode"
 }

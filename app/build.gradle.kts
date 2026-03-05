@@ -7,7 +7,9 @@ plugins {
 android {
     namespace = "com.example.mimi_projet_zentech"
     compileSdk = 36
-
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "com.example.mimi_projet_zentech"
         minSdk = 24
@@ -24,8 +26,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String" , "Base_Url" , "\"https://api-v2.smartonlineorders.com/v2/\"")
+        }
+        debug {
+            buildConfigField("String" , "Base_Url" , "\"https://api-v2-sandbox.smartonlineorders.com/v2/\"")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -35,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 dependencies {

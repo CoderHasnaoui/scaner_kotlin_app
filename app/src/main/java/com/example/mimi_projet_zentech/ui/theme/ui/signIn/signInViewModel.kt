@@ -7,57 +7,45 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimi_projet_zentech.ui.theme.SignInStrings
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
-import com.example.mimi_projet_zentech.ui.theme.data.model.Login.LoginRequest
-import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
-import com.example.mimi_projet_zentech.ui.theme.data.repository.AuthRepository
-import com.example.mimi_projet_zentech.ui.theme.data.repository.SignInRepository
-import com.example.mimi_projet_zentech.ui.theme.util.LoginResult
-import com.google.gson.Gson
+import com.example.mimi_projet_zentech.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
+import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
+import com.example.mimi_projet_zentech.data.repository.AuthRepository
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import kotlin.jvm.java
+
 
 class  SignInViewModel (application: Application): AndroidViewModel(application) {
 
 
+
+    var email by mutableStateOf("")
+        private set //
+    var password by mutableStateOf("")
+        private set
+    var loginMessage by mutableStateOf("")
+        private set
+
+    var emailError by mutableStateOf<String?>(null)
+        private set
+    var passwordError by mutableStateOf<String?>(null)
+        private set
+    var isLoading by mutableStateOf(false)
+        private set
+    var onLoginSuccess: (()->Unit)?  = null
+    fun onEmailChanged(newValue: String) { email = newValue.trim() }
+    fun onPasswordChanged(newValue: String) { password = newValue.trim() }
     private val tokenManager = TokenManager(getApplication())
     private val authApi = RetrofitInstance.publicApi
     private val repository = AuthRepository(authApi)
 
     private val userRepository = UserRepository(getApplication<Application>().dataStore)
 
-    //    private val  repository  = AuthRepository()
-    var email by mutableStateOf("")
-        private set //
-    var loginMessage by mutableStateOf("")
-        private set
-    var password by mutableStateOf("")
-        private set
-    var isLoading by mutableStateOf(false)
-        private set
-
-    fun onEmailChanged(newValue: String) {
-        email = newValue
-    }
-
-    fun onPasswordChanged(newValue: String) {
-        password = newValue
-    }
-
-    var navigateToHome by mutableStateOf(false) // for know status of Home Page
-        private set
-
-    /* those Variable for check email and password  */
-    var emailError by mutableStateOf<String?>(null)
-        private set
-    var passwordError by mutableStateOf<String?>(null)
-        private set
 
     fun onSignInClicked() {
         emailError = null
         passwordError = null
+
+        // Validateion
         // email validation
         if (email.isEmpty()) {
             emailError = "Field is required"
@@ -80,8 +68,6 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                 isLoading = true
                 loginMessage = ""
                 try {
-
-
                     val request = LoginRequest(
                         email = email,
                         password = password,
@@ -96,17 +82,13 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                         val token = data?.token
                         val name = data?.user?.name?:"unknow "
                         val emailApi  = data?.user?.email?:"exemple@gmail.com"
-//                        val email = data?.user?.email?:"unknow "
                         if (token != null) {
-//                    tokenManager.saveToken(token)
                             tokenManager.saveToken(token)
+                            tokenManager.setLoggedIn(true)
+                            userRepository.saveUserInfo(name , emailApi)
+                            //cal lamda to go Login
+                            onLoginSuccess?.invoke()
 
-                            viewModelScope.launch {
-                                userRepository.saveUserInfo(name , emailApi)
-                            }
-
-                            loginMessage = "Loading ....."
-                            navigateToHome = true
                         } else {
                             loginMessage = "Server returned no token."
                         }
@@ -126,34 +108,8 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                 } finally {
                     isLoading = false
                 }
-//        val result = repo.login(email, password)
-//            val result = repository
-//        when (result) {
-//            is LoginResult.Success -> {
-//                val sharedPref = getApplication<Application>().getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE)
-//                with(sharedPref.edit()) {
-//                    putBoolean(SignInStrings.PRE_IS_LOGGED_IN, true)
-//                    // You can also save the user's email if you want to show it on the Profile screen later
-//                    putString(SignInStrings.PRE_USER_EMAIL, email)
-//                    putString(SignInStrings.PRE_USER_PASSWORD, email)
-//                    apply()
-//                }
-////                loginMessage = result.message
-//                navigateToHome = true
-//            }
-//            is LoginResult.Error -> {
-//                loginMessage = result.errorMessage
-//            }
-//            LoginResult.Loading -> { }
-//        }
-//            isLoading = false
-//            }
             }
         }
-
-    }
-    fun onNavigationDone() {
-        navigateToHome = false
     }
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = getApplication<Application>()

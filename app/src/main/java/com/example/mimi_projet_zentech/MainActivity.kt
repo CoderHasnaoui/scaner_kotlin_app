@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.mimi_projet_zentech.ui.theme.AppSettings
 import com.example.mimi_projet_zentech.ui.theme.MimiprojetzentechTheme
 import com.example.mimi_projet_zentech.ui.theme.NavigationsSeting
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
@@ -73,27 +75,20 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-// This is okay, it lets Compose draw behind the bars
 
    installSplashScreen()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val sharedPref = getSharedPreferences(AppSettings.DARK_MODE, Context.MODE_PRIVATE)
+        val initialDarkMode = sharedPref.getBoolean(AppSettings.IS_DARK_MODE, false)
 
-        val sharedPref = getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE)
-//        val isDarkStored = sharedPref.getBoolean("is_dark_mode", false)
 
         setContent {
             val isDarkMode = remember {
-                mutableStateOf(sharedPref.getBoolean("is_dark_mode", false))
+                mutableStateOf(initialDarkMode)
             }
-//            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-//            insetsController.isAppearanceLightStatusBars = false
-//            insetsController.isAppearanceLightNavigationBars = false
-
-            MimiprojetzentechTheme(darkTheme = isDarkMode.value){
-            NavigationsSeting(isDarkMode)
-        }
+            MimiprojetzentechTheme(darkTheme = isDarkMode.value , content = {NavigationsSeting(isDarkMode)})
         }
     }
 }

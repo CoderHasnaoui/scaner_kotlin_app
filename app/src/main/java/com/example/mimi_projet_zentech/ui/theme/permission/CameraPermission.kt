@@ -8,7 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.local.SlugManager
+import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 @Composable
@@ -19,8 +20,8 @@ fun CameraPermission(
      navController: NavController
     ) {
     val context = LocalContext.current
-    val token = TokenManager(context) ;
-    val slug :String?  = token.getSlug()
+    val sm = SlugManager(context) ;
+    val slug :String?  = sm.getSlug()
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(

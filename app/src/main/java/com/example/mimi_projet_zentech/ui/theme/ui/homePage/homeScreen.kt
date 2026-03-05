@@ -32,61 +32,49 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
-import com.example.mimi_projet_zentech.ui.theme.data.model.BusinessGroup
-import com.example.mimi_projet_zentech.ui.theme.data.model.GroupeMerchant.Location
+import com.example.mimi_projet_zentech.data.local.SlugManager
+import com.example.mimi_projet_zentech.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 
 @Composable
-fun HomeScreen(navController: NavController,   forceSelect: Boolean = false, viewModel: HomeViewModel = viewModel() ) {
-
-
-
-
-    val context  = LocalContext.current
-val tokenManager =   remember { TokenManager(context) }
-    var isChecking by remember { mutableStateOf(true) }
-
+fun HomeScreen(
+    navController: NavController,
+    forceSelect: Boolean = false ,
+    viewModel: HomeViewModel = viewModel()
+) {
+    val merchants by viewModel.merchantList.collectAsStateWithLifecycle()
+    val filteredGroups by viewModel.filteredBusinessGroups.collectAsStateWithLifecycle()
+    val query by viewModel.searchText.collectAsStateWithLifecycle()
+    val navigateToScanner: (String) -> Unit = { slug ->
+        navController.navigate(Screen.ScannerScreen.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
+        }
+    }
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
-        val savedSlug = tokenManager.getSlug()
-
-        if (!forceSelect && !savedSlug.isNullOrEmpty()) {
-            navController.navigate(Screen.ScannerScreen.route) {
-                popUpTo(Screen.Home.route) { inclusive = false }
-            }
-            return@LaunchedEffect  // 👈 never set isChecking = false → screen stays blank
-        }
-
-        // no slug → now load merchants and show UI
-        isChecking = false  // 👈 show UI first
-        viewModel.loadMerchants(
-            forceSelect = forceSelect,
-            onSingleMerchant = {
-                navController.navigate(Screen.ScannerScreen.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                }
-            }
-        )
+        viewModel.checkInitialState(forceSelect, onRedirect = navigateToScanner)
     }
-    if (isChecking) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        )
-        return  // 👈 this return works because it's not inside a lambda
+
+    if (viewModel.isInitializing) {
+        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        return // don't Shoiw ui Merchnat
     }
+
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
         if (previousRoute == Screen.Login.route || previousRoute == null) {
-            // came from login → exit app
+            // came from login gooo to  exit app
             (navController.context as? Activity)?.finish()
         } else {
-            // came from profile → go back to profile
+            // came from profile gooo to back to profile
             navController.popBackStack()
         }
     }
@@ -104,7 +92,7 @@ val tokenManager =   remember { TokenManager(context) }
         if (viewModel.showSearchField) {
             Spacer(modifier = Modifier.height(50.dp))
         Row {
-       if(   viewModel.searchText.isNotEmpty() ){
+       if(   query.isNotEmpty() ){
              IconButton(
                onClick = {
                    viewModel.onSearchChange("")
@@ -120,11 +108,11 @@ val tokenManager =   remember { TokenManager(context) }
        }
 
             SearchTextFiled(
-                searchText = viewModel.searchText,
+                searchText = query,
                 onSearchChange = { viewModel.onSearchChange(it) }
             )
         }
-            if(viewModel.searchText.isNotEmpty() &&viewModel.filteredBusinessGroups.isNotEmpty()){
+            if(query.isNotEmpty() && filteredGroups .isNotEmpty()){
                 Spacer(modifier = Modifier.height(20.dp))
                 Text("Results:" , fontSize = 15.sp)
             }
@@ -134,7 +122,7 @@ val tokenManager =   remember { TokenManager(context) }
             Spacer(modifier = Modifier.height(60.dp))
         }
 
-        if (viewModel.searchText.isEmpty()) {
+        if (query.isEmpty()) {
             Text(
                 text = "Select the Business Group that is hosting the event.",
                 style = MaterialTheme.typography.titleLarge,
@@ -155,8 +143,8 @@ val tokenManager =   remember { TokenManager(context) }
                 viewModel.noSearchResult-> {
                     NoSearchResultView()
                 }
-                viewModel. merchantList.isEmpty() -> {
-                    EmptyStateView(onRefresh = { viewModel.loadMerchants() })
+                 merchants.isEmpty() -> {
+                    EmptyStateView(onRefresh = { viewModel.loadMerchants(onRedirect = navigateToScanner) })
                 }
                 else -> {
                     LazyColumn(
@@ -164,15 +152,15 @@ val tokenManager =   remember { TokenManager(context) }
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(viewModel.filteredBusinessGroups) { marchent ->
+                        items(filteredGroups) { marchent ->
                             MyBuisneCard(
                                 slug = marchent.slug,
                                 name = marchent.name,
                                 offices = marchent.locations,
-                                totalBusinessCount = viewModel.merchantList.size ,
+                                totalBusinessCount = merchants.size,
                                 navController= navController ,
                                 viewModel=viewModel ,
-                                tokenManager = tokenManager
+
 
                             )
                         }
@@ -185,13 +173,13 @@ val tokenManager =   remember { TokenManager(context) }
 
 @Composable
 fun MyBuisneCard(
-    slug :String ,
+    slug :String,
     name: String,
     offices: List<Location>,
     totalBusinessCount: Int,
     navController: NavController,
-    viewModel: HomeViewModel , // <--- Add this parameter ,
-    tokenManager: TokenManager
+    viewModel: HomeViewModel, //,
+
 ) {
     val isExpanded = viewModel.expandedCardIds[slug] ?: false
     val isLocationExpanded = viewModel.expandedLocationIds[slug] ?: false
@@ -248,7 +236,8 @@ fun MyBuisneCard(
 
                 Button(
                     onClick = {
-                        tokenManager.saveSlug(slug)
+
+                        viewModel.selectMerchant(slug)
                        navController.navigate(
                         Screen.ScannerScreen.route )
                     },
@@ -311,76 +300,3 @@ fun MyBuisneCard(
 }
 
 
-
-@Composable
-fun SearchTextFiled(searchText: String, onSearchChange: (String) -> Unit) {
-    val leadingIcon: @Composable (() -> Unit)? = if (searchText.isEmpty()) {
-        { Icon(Icons.Outlined.Search, contentDescription = null, tint = Color.Gray) }
-    } else {
-        null
-    }
-
-      OutlinedTextField(
-          value = searchText,
-          onValueChange = onSearchChange,
-          placeholder = { Text("Search merchants...", color = Color.Gray) },
-          leadingIcon = leadingIcon,
-          modifier = Modifier.fillMaxWidth().height(56.dp),
-          singleLine = true,
-          colors =  OutlinedTextFieldDefaults.colors(
-              unfocusedBorderColor = Color(0xFFE0E0E0),
-              focusedBorderColor = Color(0xFFE0E0E0),
-              cursorColor = Color.Black
-          ),
-          shape = RoundedCornerShape(12.dp)
-      )
-  }
-
-@Composable
-fun NoSearchResultView() {
-    Column(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(Icons.Outlined.Search, null, modifier = Modifier.size(80.dp), tint = Color.LightGray)
-        Text("No Search Results", color = MaterialTheme.colorScheme.onBackground)
-    }
-}
-
-@Composable
-fun EmptyStateView(onRefresh :()->Unit) {
-    Column( modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally )
-    {
-        Icon( imageVector = Icons.Default.CloudOff,
-            contentDescription = null, modifier = Modifier.size(100.dp),
-            tint = Color.LightGray.copy(alpha = 0.5f) )
-        Text( text = "Oops! No business group was found.",
-            color = Color.Gray, style = MaterialTheme.typography.bodyMedium )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button( onClick =onRefresh, shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D58D1)) )
-        { Text("Refresh", color = Color.White) } }
-}
-
-@Composable
-fun LoadingView() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator(
-            color = Color(0xFF1D58D1),
-            strokeWidth = 4.dp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Fetching merchants...",
-            color = Color.Gray,
-            fontSize = 14.sp
-        )
-    }
-}

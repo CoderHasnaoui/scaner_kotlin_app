@@ -46,13 +46,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
-import com.example.mimi_projet_zentech.ui.theme.data.model.GroupeMerchant.MerchantGroup
-import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
-import com.example.mimi_projet_zentech.ui.theme.data.repository.AuthRepository
-import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
 
-val repo = HomeRepository()
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun profileScreen(
@@ -61,12 +57,19 @@ fun profileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val sharedPref = remember { context.getSharedPreferences(SignInStrings.PRE_LOGGIN_NAME, Context.MODE_PRIVATE) }
     val userName by viewModel.userName.collectAsStateWithLifecycle()
     val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
     // Trigger API load once
     LaunchedEffect(Unit) {
         viewModel.loadProfileData()
+    }
+    if (!viewModel.isReady) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+        return
     }
 
     Scaffold(
@@ -131,9 +134,21 @@ fun profileScreen(
                         Spacer(modifier = Modifier.width(12.dp))
 
                         Box(modifier = Modifier.weight(1f)) {
+                            // loading State
                             if (viewModel.isLoading) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            } else {
+                            }
+                            // Error state
+                            else if ((viewModel.errorMessage != null)){
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                                    Text(viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
+                                    TextButton(onClick = { viewModel.loadProfileData() }) {
+                                        Text("Retry", fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                            // Succes State
+                            else {
                                 val merchant = viewModel.selectedMerchant
                                 Column {
                                     Text(merchant?.name ?: "No Selection", fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -145,7 +160,7 @@ fun profileScreen(
 
                         Button(
 
-                            onClick = { viewModel.tokenManager.clearSelectedSlug()
+                            onClick = { viewModel.slugManager.clearSelectedSlug()
                                 navController.navigate(Screen.Home.getRoute(forceSelect = true)) {
                                     popUpTo(Screen.Home.route) { inclusive = true }
                                 } },
@@ -158,8 +173,8 @@ fun profileScreen(
                             Text("Change", color = Color.White)
                         }
                     }
-
-                    if (!viewModel.isLoading && viewModel.selectedMerchant != null) {
+            // Location List
+                    if (viewModel.selectedMerchant != null) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp)) {
                             Column(modifier = Modifier.padding(12.dp)) {
@@ -185,7 +200,8 @@ fun profileScreen(
                     checked = isDarkModeState.value, // Uses the state passed from MainActivity
                     onCheckedChange = { newValue ->
                         isDarkModeState.value = newValue // Updates the global theme
-                        sharedPref.edit().putBoolean("is_dark_mode", newValue).apply() // Persists it
+//                        sharedPref.edit().putBoolean("is_dark_mode", newValue).apply() // Persists it
+                        viewModel.themeRepo.setDarkMode(newValue)
                     }
                 )
             }
@@ -196,7 +212,8 @@ fun profileScreen(
             Button(
                 onClick = {
                     viewModel.tokenManager.clearToken()
-                    sharedPref.edit().putBoolean(SignInStrings.PRE_IS_LOGGED_IN, false).apply()
+                    viewModel.tokenManager.logOut()
+                    viewModel.slugManager.clearSelectedSlug()
                     navController.navigate(Screen.Login.route) { popUpTo(0) { inclusive = true } }
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),

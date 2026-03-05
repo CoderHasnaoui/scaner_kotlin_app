@@ -17,8 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.mimi_projet_zentech.ui.theme.data.local.SessionManager
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.local.SessionManager
+
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.splash.SplashScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.DeniedScreen
@@ -37,8 +37,8 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val context = LocalContext.current
 
     val navController = rememberNavController()
-    val tokenManager = remember { TokenManager(context) }
-    val isLoggedIn = remember { tokenManager.isLoggedIn() }
+//    val tokenManager = remember { TokenManager(context) }
+//    val isLoggedIn = remember { tokenManager.isLoggedIn() }
     remember {
         SessionManager.onTokenExpired = {
             navController.navigate(Screen.Login.route) {
@@ -56,7 +56,10 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
 
     NavHost(navController = navController , startDestination = Screen.Splash.route) {
         composable (Screen.Splash.route) {
-            SplashScreen(navController = navController , isLoggedIn)
+            SplashScreen(
+                navController = navController,
+
+            )
         }
 
         composable(

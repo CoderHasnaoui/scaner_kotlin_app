@@ -23,11 +23,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
-import com.example.mimi_projet_zentech.ui.theme.data.local.SessionManager
-import com.example.mimi_projet_zentech.ui.theme.data.local.TokenManager
-import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
-import com.example.mimi_projet_zentech.ui.theme.data.remote.RetrofitInstance
-import com.example.mimi_projet_zentech.ui.theme.data.repository.HomeRepository
+
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.ManualEntryDialog
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
 import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
