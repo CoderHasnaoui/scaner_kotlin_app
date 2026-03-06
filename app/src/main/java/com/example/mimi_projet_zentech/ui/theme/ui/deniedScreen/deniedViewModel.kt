@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen
 
+
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -63,4 +64,3 @@ class DeniedViewModel(application: Application) : AndroidViewModel(application) 
             isProcessing = false
         }
     }
-}
