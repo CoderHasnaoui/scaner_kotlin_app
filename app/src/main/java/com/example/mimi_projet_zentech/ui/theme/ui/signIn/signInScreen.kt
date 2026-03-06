@@ -1,10 +1,8 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
-import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,46 +14,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.mimi_projet_zentech.ui.theme.ErrorRed
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
@@ -64,6 +43,8 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
 
     val focusManager = LocalFocusManager.current
 
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val field by viewModel.fields.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         viewModel.onLoginSuccess = {
             navController.navigate(Screen.Home.getRoute()) {
@@ -104,17 +85,18 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
 
                 Spacer(modifier = Modifier.height(16.dp))
                 // --- Email Text   ---
-                SignInInput("email" ,viewModel.email ,onValueChange = {viewModel.onEmailChanged(it)}  , icon = SignIncon.Email , errorMessage = viewModel.emailError  , enableField = !viewModel.isLoading)
+                SignInInput("email" ,field.email ,onValueChange = {viewModel.onEmailChanged(it)}  , icon = SignIncon.Email , errorMessage = field.emailError  , enableField = state !is SignInState.Loading)
                 // --- Password Field  ---
-                SignInInput("password" ,viewModel.password ,onValueChange = {viewModel.onPasswordChanged(it)}  , icon = SignIncon.Password , isPasswordField = true  , errorMessage = viewModel.passwordError , enableField = !viewModel.isLoading)
-                // E
-                if (viewModel.loginMessage.isNotEmpty()) {
-                    Text(
-                        text = viewModel.loginMessage, fontSize = 14.sp,
-                        color = if (viewModel.loginMessage.contains("Loading")) MaterialTheme.colorScheme.onBackground else Color.Red,
-//                        modifier = Modifier.padding(top = 10.dp)
-                    )
-                }
+                SignInInput("password" ,field.password ,onValueChange = {viewModel.onPasswordChanged(it)}  , icon = SignIncon.Password , isPasswordField = true  , errorMessage = field.passwordError , enableField =state !is SignInState.Loading)
+                // Eroor message by selad Status
+                    if (state is SignInState.Error) {
+                        Text(
+                            text = (state as SignInState.Error).message,
+                            color = Color.Red,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 Spacer(modifier = Modifier.height(5.dp))
                 // this is Forget password tache  ?
                 TextButton(onClick = {} ,
@@ -130,7 +112,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                 Spacer(modifier = Modifier.height(5.dp))
                 // Sign In Button
                 TextButton(  onClick = {viewModel.onSignInClicked()},
-                    enabled = !viewModel.isLoading,
+                    enabled = state !is SignInState.Loading,
 
                     modifier = Modifier
                         .fillMaxWidth()
@@ -138,7 +120,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                     shape = RoundedCornerShape(50.dp) ,
                     colors = ButtonDefaults.buttonColors( containerColor = Color(0xFF0452F0))
                 ) {
-                    if (viewModel.isLoading) {
+                    if (state is SignInState.Loading) {
                             CircularProgressIndicator(
                             color = Color.White,
                             modifier = Modifier.size(24.dp),

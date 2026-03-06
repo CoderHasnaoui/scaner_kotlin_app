@@ -2,75 +2,75 @@ package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
 import android.app.Application
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 class  SignInViewModel (application: Application): AndroidViewModel(application) {
 
-
-
-    var email by mutableStateOf("")
-        private set //
-    var password by mutableStateOf("")
-        private set
-    var loginMessage by mutableStateOf("")
-        private set
-
-    var emailError by mutableStateOf<String?>(null)
-        private set
-    var passwordError by mutableStateOf<String?>(null)
-        private set
-    var isLoading by mutableStateOf(false)
-        private set
-    var onLoginSuccess: (()->Unit)?  = null
-    fun onEmailChanged(newValue: String) { email = newValue.trim() }
-    fun onPasswordChanged(newValue: String) { password = newValue.trim() }
+    //Api Calles
     private val tokenManager = TokenManager(getApplication())
-    private val authApi = RetrofitInstance.publicApi
-    private val repository = AuthRepository(authApi)
-
+    private val repository = AuthRepository(RetrofitInstance.publicApi)
     private val userRepository = UserRepository(getApplication<Application>().dataStore)
+    var onLoginSuccess: (()->Unit)?  = null
+    // SignState
+    private val _state = MutableStateFlow<SignInState>(SignInState.Ready)
+    val state :  StateFlow<SignInState> = _state.asStateFlow()
+    private val _fields = MutableStateFlow(SignInData())
+    val fields: StateFlow<SignInData> = _fields.asStateFlow()
 
 
+
+    fun onEmailChanged(newValue: String) {
+    _fields.update { it.copy(email = newValue , emailError = null) }
+    }
+    fun onPasswordChanged(newValue: String) {
+        _fields.update { it.copy(password = newValue.trim(), passwordError = null) }
+    }
     fun onSignInClicked() {
-        emailError = null
-        passwordError = null
+        val curentState = _fields.value
 
-        // Validateion
-        // email validation
-        if (email.isEmpty()) {
-            emailError = "Field is required"
-        } else if (!email.contains("@")) {
-            emailError = "Email must contain @"
+        val emailErr = when {
+            curentState.email.isEmpty() -> "Field is required"
+            "@" !in curentState.email -> "Email must contain @"
+            else -> null
         }
-//         Password Validation
-        if (password.isEmpty()) {
-            passwordError = "Field is required"
-        } else if (password.length < 6) {
-            passwordError = "Password must be at least 6 characters"
+
+        val passwordErr = when {
+            curentState.password.isEmpty() -> "Field is Required"
+            curentState.password.length<8 ->  "Password must be at least 5 characters"
+            else -> null
         }
-//        check Error from filed
-        if (emailError == null && passwordError == null) {
-            if (!isNetworkAvailable()) {
-                loginMessage = "No internet connection."
-                return
-            }
+
+        if(emailErr!=null || passwordErr!=null){
+            _fields.update { it.copy(emailError = emailErr, passwordError = passwordErr) }
+            return
+
+        }
+//        if (!isNetworkAvailable()) {
+//            _state.update { it.copy(loginMessage = "No internet connection.") }
+//            return
+//        }
+        if (!isNetworkAvailable()) {
+            _state.value = SignInState.Error("No internet connection.")
+            return
+        }
+
             viewModelScope.launch {
-                isLoading = true
-                loginMessage = ""
+                _state.value = SignInState.Loading
                 try {
                     val request = LoginRequest(
-                        email = email,
-                        password = password,
+                        email = curentState.email,
+                        password = curentState.password,
                         gToken = "",
 
                         platform = "android",
@@ -88,28 +88,31 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                             userRepository.saveUserInfo(name , emailApi)
                             //cal lamda to go Login
                             onLoginSuccess?.invoke()
-
                         } else {
-                            loginMessage = "Server returned no token."
+                            _state.value = SignInState.Error("Invalid credentials")
                         }
 
                     } else {
 
-                        val errorText = response.errorBody()?.string()
+                        val errorText = response.errorBody()?.string() ?:""
 
-                        if (errorText?.contains("did not match our records") == true) {
-                            loginMessage = "Email or password is invalid , Please try again."
+                        val message = if( "did not match our records" in errorText  ){
+                            _state.value = SignInState.Error("Invalid credentials")
                         } else {
-                            loginMessage = "Login failed. Please try again."
+                            _state.value = SignInState.Error("Login failed. Please try again.")
                         }
+
+
+
+
                     }
                 } catch (e: Exception) {
-                    loginMessage = "Something Wrong"
-                } finally {
-                    isLoading = false
+                    _state.value = SignInState.Error("Something Wrong.")
                 }
+//                finally {
+//                    _uiState.update { it.copy(isLoading = false) }
+//                }
             }
-        }
     }
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = getApplication<Application>()

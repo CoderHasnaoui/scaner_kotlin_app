@@ -20,99 +20,93 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-class HomeViewModel (application : Application): AndroidViewModel(application){
-    var isInitializing by mutableStateOf(true)
-        private set
+class HomeViewModel (application : Application): AndroidViewModel(application) {
 
-    private  val tokenManager = TokenManager(application)
-     private var slugManager = SlugManager(application)
+    private val tokenManager = TokenManager(application)
+    private val slugManager = SlugManager(application)
 
-    private var _merchantList = MutableStateFlow<List<MerchantGroup>>(emptyList())
-    var merchantList  : StateFlow<List<MerchantGroup>> = _merchantList.asStateFlow()
-    var isLoading by mutableStateOf(false)
-    private val merchantApi by lazy { RetrofitInstance.getPrivateApi(tokenManager ,  onTokenExpired = { SessionManager.notifyTokenExpired()} )}
+    // 1.  SEALD STATE
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    // 2.  SEARCH INPUT
+    private val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
+
+    // 3. THE CACHE (Keeps the full list in memory for fast filtering)
+    private var allMerchants = emptyList<MerchantGroup>()
+
+    private val merchantApi by lazy {
+        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
+    }
     private val repo by lazy { MerchantRepository(merchantApi) }
 
-    var expandedCardIds = mutableStateMapOf<String, Boolean>()
+    // UI Expansion States
+    val expandedCardIds = mutableStateMapOf<String, Boolean>()
+    val expandedLocationIds = mutableStateMapOf<String, Boolean>()
 
-    var expandedLocationIds = mutableStateMapOf<String, Boolean>()
-    private var _searchText = MutableStateFlow<String>("")
-    var searchText : StateFlow<String> = _searchText.asStateFlow()
-
-    fun selectMerchant(slug: String) {
-        slugManager.saveSlug(slug)
-    }
     fun checkInitialState(forceSelect: Boolean, onRedirect: (String) -> Unit) {
         val savedSlug = slugManager.getSlug()
-
-        // have slug and don't force ui to build
+        // if i have a slug saved and don't force to it go to Scanner
         if (!forceSelect && !savedSlug.isNullOrEmpty()) {
             onRedirect(savedSlug)
             return
         }
-
         // Load List
         loadMerchants(forceSelect, onRedirect)
     }
+
     fun loadMerchants(
         forceSelect: Boolean = false,
         onRedirect: (String) -> Unit
     ) {
         viewModelScope.launch {
-            isLoading = true
+            _uiState.value = HomeUiState.Loading
             try {
                 val response = repo.getMerchants()
                 if (response.isSuccessful) {
-                    val list  = response.body() ?: emptyList()
-                        _merchantList.value = list
+                    val list = response.body() ?: emptyList()
+                    allMerchants = list
                     if (list.size == 1 && !forceSelect) {  //   forceSelect
                         val slug = list[0].slug
                         slugManager.saveSlug(slug)
                         onRedirect(slug)
-                    }else{
-                        isInitializing = false
+                    } else {
+                        applyFilter()
                     }
-                }else{
-                    isInitializing = false
+                } else {
+                    _uiState.value = HomeUiState.Error("Server error: ${response.code()}")
                 }
             } catch (e: Exception) {
-                isInitializing = false
-                e.printStackTrace()
-            } finally {
-                isLoading = false
+                _uiState.value = HomeUiState.Error("Check your internet connection")
             }
         }
     }
+
     fun onSearchChange(text: String) {
         _searchText.value = text
-    }
-    // Business Logic for expansion
-    fun toggleOfficeExpansion(slug: String) {
-        val current = expandedCardIds[slug] ?: false
-        expandedCardIds[slug] = !current
-    }
-    fun toggleLocationList(slug: String) {
-        val current = expandedLocationIds[slug] ?: false
-        expandedLocationIds[slug] = !current
+        applyFilter()
     }
 
-    val filteredBusinessGroups = combine(_merchantList , _searchText){list ,query->
-        if(query.isEmpty())
-        {
-            list
-        }else{
-            list.filter { it.name.contains(query , ignoreCase = true) }
+    private fun applyFilter() {
+        val query = _searchText.value
+        val filtered = allMerchants.filter { it.name.contains(query, ignoreCase = true) }
+
+        _uiState.value = when {
+            allMerchants.isEmpty() -> HomeUiState.Empty
+            filtered.isEmpty() && query.isNotEmpty() -> HomeUiState.NoResults
+            else -> HomeUiState.Success(filtered)
         }
+    }
 
+    fun selectMerchant(slug: String) = slugManager.saveSlug(slug)
+    fun toggleOfficeExpansion(slug: String) {
+        expandedCardIds[slug] = !(expandedCardIds[slug] ?: false)
+    }
 
-    }.stateIn(
-        scope = viewModelScope ,
-        started = SharingStarted.WhileSubscribed(5000) ,
-        initialValue = emptyList()
-    )
+    fun toggleLocationList(slug: String) {
+        expandedLocationIds[slug] = !(expandedLocationIds[slug] ?: false)
+    }
 
-    val showSearchField: Boolean get() =  _merchantList.value.size > 3 || _searchText.value.isNotEmpty()
-
-    val noSearchResult: Boolean
-        get() = _searchText.value.isNotEmpty() && filteredBusinessGroups.value.isEmpty()
+    val showSearchField: Boolean get() = allMerchants.size > 3 || _searchText.value.isNotEmpty()
 }

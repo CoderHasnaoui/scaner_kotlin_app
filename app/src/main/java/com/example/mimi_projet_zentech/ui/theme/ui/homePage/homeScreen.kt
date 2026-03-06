@@ -50,23 +50,20 @@ fun HomeScreen(
     forceSelect: Boolean = false ,
     viewModel: HomeViewModel = viewModel()
 ) {
-    val merchants by viewModel.merchantList.collectAsStateWithLifecycle()
-    val filteredGroups by viewModel.filteredBusinessGroups.collectAsStateWithLifecycle()
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.searchText.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
     val navigateToScanner: (String) -> Unit = { slug ->
         navController.navigate(Screen.ScannerScreen.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
         }
     }
-    val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         viewModel.checkInitialState(forceSelect, onRedirect = navigateToScanner)
     }
 
-    if (viewModel.isInitializing) {
-        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
-        return // don't Shoiw ui Merchnat
-    }
+
 
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
@@ -89,34 +86,20 @@ fun HomeScreen(
             }
     ) {
 
-        if (viewModel.showSearchField) {
-            Spacer(modifier = Modifier.height(50.dp))
-        Row {
-       if(   query.isNotEmpty() ){
-             IconButton(
-               onClick = {
-                   viewModel.onSearchChange("")
-               }
-           ) {
-               Icon(
-                   modifier = Modifier.padding(top = 12.dp),
-                   imageVector = Icons.Default.ArrowBack,
-                   contentDescription = "Back",
-                   tint = MaterialTheme.colorScheme.onBackground // You can customize the color here
-               )
-           }
-       }
-
-            SearchTextFiled(
-                searchText = query,
-                onSearchChange = { viewModel.onSearchChange(it) }
-            )
-        }
-            if(query.isNotEmpty() && filteredGroups .isNotEmpty()){
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("Results:" , fontSize = 15.sp)
-            }
-
+            // --- SEARCH HEADER ---
+            if (viewModel.showSearchField) {
+                Spacer(modifier = Modifier.height(50.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchChange("") }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                    SearchTextFiled(
+                        searchText = query,
+                        onSearchChange = { viewModel.onSearchChange(it) }
+                    )
+                }
 
         } else {
             Spacer(modifier = Modifier.height(60.dp))
@@ -136,28 +119,42 @@ fun HomeScreen(
         }
 
         Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
-            when {
-                viewModel.isLoading -> {
+            when(val state = uiState) {
+                is HomeUiState.Loading-> {
                     LoadingView()
                 }
-                viewModel.noSearchResult-> {
+               is HomeUiState.NoResults-> {
                     NoSearchResultView()
                 }
-                 merchants.isEmpty() -> {
+                 is HomeUiState.Empty -> {
                     EmptyStateView(onRefresh = { viewModel.loadMerchants(onRedirect = navigateToScanner) })
                 }
-                else -> {
+                is HomeUiState.Error ->{
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(80.dp), tint = Color.Red.copy(alpha = 0.5f))
+                        Text(state.message, color = MaterialTheme.colorScheme.onBackground)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.loadMerchants { } }) {
+                            Text("Try Again")
+                        }
+                    }
+                }
+                is HomeUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(filteredGroups) { marchent ->
+                        items(state.merchants) { merchent ->
                             MyBuisneCard(
-                                slug = marchent.slug,
-                                name = marchent.name,
-                                offices = marchent.locations,
-                                totalBusinessCount = merchants.size,
+                                slug = merchent.slug,
+                                name = merchent.name,
+                                offices = merchent.locations,
+                                totalBusinessCount = state.merchants.size,
                                 navController= navController ,
                                 viewModel=viewModel ,
 
