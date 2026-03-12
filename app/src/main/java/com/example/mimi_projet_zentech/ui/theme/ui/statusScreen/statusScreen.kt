@@ -18,19 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
-
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -40,17 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 import com.example.mimi_projet_zentech.ui.theme.Poppins
-import com.example.mimi_projet_zentech.ui.theme.SignInStrings
-import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.geBacgound
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.getIconDrawable
-
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.TicketRow
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.curveStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.componenet.tryAgainButton
@@ -62,20 +54,15 @@ fun ValidScreen(
     scanStatusInitial: ScanStatus,
     ticketNum: String?
 ) {
-    val context = LocalContext.current
-
 
     val viewModel: ValidViewModel = viewModel()
-
-
-
-
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(ticketNum) {
         viewModel.loadTicket(ticketNum, scanStatusInitial)
     }
 
-    if (!viewModel.isReady) {
+    if (uiState is ValidUiState.Initializing) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,7 +71,9 @@ fun ValidScreen(
         return
     }
 
-    if (viewModel.isLoading) {
+
+
+    if (uiState is ValidUiState.Loading) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -95,6 +84,7 @@ fun ValidScreen(
         }
         return
     }
+    val ticket = (uiState as? ValidUiState.Success)?.ticket
 
     // Rest of your screen runs only when loading is done
     Column(
@@ -109,7 +99,7 @@ fun ValidScreen(
             Column(Modifier.padding(horizontal = 26.dp)) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = viewModel.ticket?.name ?: "Unknown",
+                    text = ticket?.name ?: "Unknown",
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -136,12 +126,12 @@ fun ValidScreen(
                         .padding(17.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    TicketRow("Name:", viewModel.ticket?.ownerName ?: "Unknown")
-                    TicketRow("Order Number:", viewModel.ticket?.orderNumber ?: "N/A")
-                    TicketRow("Date/Time:", formatApiDate(viewModel.ticket?.dateTime))
-                    TicketRow("Number of People:", "${viewModel.ticket?.nbOfPersons ?: 0} People")
+                    TicketRow("Name:", ticket?.ownerName ?: "Unknown")
+                    TicketRow("Order Number:", ticket?.orderNumber ?: "N/A")
+                    TicketRow("Date/Time:", formatApiDate(ticket?.dateTime))
+                    TicketRow("Number of People:", "${ticket?.nbOfPersons ?: 0} People")
 
-                    TicketRow("Price:", if(viewModel.ticket?.amount==0.0) "Free Ticket"  else "$${viewModel.ticket?.amount ?: "0.00"}"  , isThelast = true)
+                    TicketRow("Price:", if(ticket?.amount==0.0) "Free Ticket"  else "$${ticket?.amount ?: "0.00"}"  , isThelast = true)
                 }
             }
 

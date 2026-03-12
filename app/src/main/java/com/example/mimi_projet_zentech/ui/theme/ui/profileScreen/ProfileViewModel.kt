@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.SessionManager
 import com.example.mimi_projet_zentech.data.local.SlugManager
 import com.example.mimi_projet_zentech.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
 import com.example.mimi_projet_zentech.data.model.GroupeMerchant.MerchantGroup
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.MerchantRepository
@@ -22,8 +23,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
+
+    val db = DatabaseProvider.getDatabase(application)
     val themeRepo = ThemeRepository(context = application)
-     val tokenManager = TokenManager(application)
+    val tokenManager = TokenManager(application)
     val slugManager = SlugManager(context = application)
     private val userRepository = UserRepository(getApplication<Application>().dataStore)
 
@@ -82,7 +85,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
                 val slug = slugManager.getSlug()
                 if (slug != null) {
-                    val repository = MerchantRepository(api)
+                    val repository = MerchantRepository(api ,db.merchantDao() )
                     val result: MerchantGroup? = repository.getMerchantBySlug(slug)
 
                     if (result != null) {

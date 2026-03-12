@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("kotlin-kapt")
 }
 
 android {
@@ -45,7 +47,66 @@ android {
         buildConfig = true
     }
 }
+//plugins {
+//    alias(libs.plugins.android.application)
+//    alias(libs.plugins.kotlin.android)
+//    alias(libs.plugins.kotlin.compose)
+//
+//}
+
+android {
+    namespace = "com.example.mimi_projet_zentech"
+    compileSdk = 36
+    buildFeatures {
+        buildConfig = true
+    }
+    defaultConfig {
+        applicationId = "com.example.mimi_projet_zentech"
+        minSdk = 24
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            buildConfigField("String" , "Base_Url" , "\"https://api-v2.smartonlineorders.com/v2/\"")
+        }
+        debug {
+            buildConfigField("String" , "Base_Url" , "\"https://api-v2-sandbox.smartonlineorders.com/v2/\"")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+}
 dependencies {
+    // biometric
+    implementation("androidx.biometric:biometric:1.1.0")
+
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.foundation.layout)
+
+    kapt("androidx.room:room-compiler:2.6.1")
+
+    // If this project only uses Java source, use the Java annotationProcessor
+
     // encrypted shared pre
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     // DataStore
@@ -72,10 +133,10 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
-    dependencies {
+
         // This gives you access to almost every Material icon (Outlined, Rounded, etc.)
         implementation("androidx.compose.material:material-icons-extended:1.7.0")
-    }
+
     dependencies {
         // 1. The ViewModel library (The "Brain")
         implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")

@@ -31,14 +31,17 @@
     import androidx.core.content.ContextCompat
     import android.Manifest
     import androidx.lifecycle.compose.LifecycleResumeEffect
+    import androidx.lifecycle.compose.collectAsStateWithLifecycle
     import androidx.lifecycle.viewmodel.compose.viewModel
+    import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanUiState
+    import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
 
 
     @Composable
-    fun DeniedScreen(navController: NavController) {
-        val context = LocalContext.current
-        val viewModel: DeniedViewModel = viewModel()
+    fun DeniedScreen(navController: NavController , viewModel: ScanViewMode) {
+        val uistate= viewModel.uiState.collectAsStateWithLifecycle()
         var showManualDialog by remember { mutableStateOf(false) }
+        val context = LocalContext.current
 
 
         LaunchedEffect(Unit) {
@@ -93,7 +96,7 @@
                 onDismiss = { showManualDialog = false },
                 onNext = { passId ->
                     showManualDialog = false
-                    viewModel.handleManualEntry(passId)
+                    viewModel.handleScanResult(passId)
                 }
             )
 
@@ -153,7 +156,7 @@
         }
 
         // 👇 loading overlay
-        if (viewModel.isProcessing) {
+        if (uistate is ScanUiState.Verifiying) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -168,42 +171,7 @@
             }
         }
     }
-    @Composable
-    fun TopOptionsMenu(
-        navController: NavController,
-        modifier: Modifier = Modifier,
-        iconColor: Color = Color.Black //
 
-    ) {
-        var showMenu by remember { mutableStateOf(false) }
-
-        // 1. This Box is the "Anchor". The menu will stay attached to this Box.
-        Box(modifier = modifier) {
-            IconButton(onClick = { showMenu = true }) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Menu",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false },
-                shape = RoundedCornerShape(12.dp),
-                containerColor = MaterialTheme.colorScheme.onBackground
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Profile", color = MaterialTheme.colorScheme.background) },
-                    onClick = {
-                        showMenu = false
-    //                    val idToSend = buisnesId ?: -1
-                        navController.navigate(Screen.Profile.route)
-                    }
-                )
-            }
-        }
-    }
 
 
 

@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -72,7 +73,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 

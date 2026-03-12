@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -53,6 +54,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
         }
     }
     // Navigate if login is successful
+// After your LaunchedEffect
 
 
     // ---  Main Screen ---
@@ -67,6 +69,23 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                     })
                 }
                 ){
+                if (state is SignInState.ShowBiometricDialog) {
+                    AlertDialog(
+                        onDismissRequest = { viewModel.onBiometricDialogResult(false) },
+                        title = { Text("Enable Fingerprint Login?") },
+                        text = { Text("Use your fingerprint to log in faster next time.") },
+                        confirmButton = {
+                            TextButton(onClick = { viewModel.onBiometricDialogResult(true) }) {
+                                Text("Enable", color = Color(0xFF0452F0))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { viewModel.onBiometricDialogResult(false) }) {
+                                Text("Not now", color = Color.Gray)
+                            }
+                        }
+                    )
+                }
                 Spacer(Modifier.height(24.dp))
                 // --- Sign in Text ---
                 Text(text = SignInStrings.SIGN_IN_TITLE,

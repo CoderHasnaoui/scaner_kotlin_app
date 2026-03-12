@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 
+import HomeViewModel
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
@@ -31,76 +32,75 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
-import com.example.mimi_projet_zentech.data.local.SlugManager
-import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
-
 
 @Composable
 fun HomeScreen(
     navController: NavController,
-    forceSelect: Boolean = false ,
+    forceSelect: Boolean = false,
     viewModel: HomeViewModel = viewModel()
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.searchText.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
+
+    // YOUR ORIGINAL REDIRECT LOGIC
     val navigateToScanner: (String) -> Unit = { slug ->
         navController.navigate(Screen.ScannerScreen.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
         }
     }
+
     LaunchedEffect(Unit) {
         viewModel.checkInitialState(forceSelect, onRedirect = navigateToScanner)
     }
 
-
-
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
-        if (previousRoute == Screen.Login.route || previousRoute == null) {
-            // came from login gooo to  exit app
+        if (previousRoute == Screen.Login.route || previousRoute == null  ||
+            previousRoute == Screen.passwordConfirm.route) {
             (navController.context as? Activity)?.finish()
         } else {
-            // came from profile gooo to back to profile
             navController.popBackStack()
         }
     }
 
-        Column(
+    Column(
         modifier = Modifier
-            .fillMaxSize().background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp)  .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    focusManager.clearFocus() // Hides keyboard when you tap the background
-                })
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 20.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
             }
     ) {
-
-            // --- SEARCH HEADER ---
-            if (viewModel.showSearchField) {
-                Spacer(modifier = Modifier.height(50.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onSearchChange("") }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
+        // --- SEARCH HEADER ---
+        if (viewModel.showSearchField) {
+            Spacer(modifier = Modifier.height(50.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.onSearchChange("") }) {
+                        Icon(
+                            modifier = Modifier.padding(top = 12.dp),
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
-                    SearchTextFiled(
-                        searchText = query,
-                        onSearchChange = { viewModel.onSearchChange(it) }
-                    )
                 }
-
+                SearchTextFiled(
+                    searchText = query,
+                    onSearchChange = { viewModel.onSearchChange(it) }
+                )
+            }
+            if (query.isNotEmpty() && uiState is HomeUiState.Success) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text("Results:", fontSize = 15.sp)
+            }
         } else {
             Spacer(modifier = Modifier.height(60.dp))
         }
@@ -111,25 +111,26 @@ fun HomeScreen(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 16.dp),
-                lineHeight = 28.sp ,
+                lineHeight = 28.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
         } else {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // --- CONTENT AREA ---
         Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
-            when(val state = uiState) {
-                is HomeUiState.Loading-> {
-                    LoadingView()
+            when (val state = uiState) {
+                is HomeUiState.Loading -> LoadingView()
+
+                is HomeUiState.NoResults -> NoSearchResultView()
+
+                is HomeUiState.Empty -> {
+
+                    EmptyStateView(onRefresh = { viewModel.loadMerchants(forceSelect, navigateToScanner) })
                 }
-               is HomeUiState.NoResults-> {
-                    NoSearchResultView()
-                }
-                 is HomeUiState.Empty -> {
-                    EmptyStateView(onRefresh = { viewModel.loadMerchants(onRedirect = navigateToScanner) })
-                }
-                is HomeUiState.Error ->{
+
+                is HomeUiState.Error -> {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -138,27 +139,28 @@ fun HomeScreen(
                         Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(80.dp), tint = Color.Red.copy(alpha = 0.5f))
                         Text(state.message, color = MaterialTheme.colorScheme.onBackground)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadMerchants { } }) {
+                        // FIXED: Added navigateToScanner here too
+                        Button(onClick = { viewModel.loadMerchants(forceSelect, navigateToScanner) }) {
                             Text("Try Again")
                         }
                     }
                 }
+
                 is HomeUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(state.merchants) { merchent ->
+                        items(state.merchants) { merchant ->
                             MyBuisneCard(
-                                slug = merchent.slug,
-                                name = merchent.name,
-                                offices = merchent.locations,
+                                slug = merchant.slug,
+                                name = merchant.name,
+                                offices = merchant.locations,
+
                                 totalBusinessCount = state.merchants.size,
-                                navController= navController ,
-                                viewModel=viewModel ,
-
-
+                                navController = navController,
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -167,7 +169,14 @@ fun HomeScreen(
         }
     }
 }
+/*
 
+
+git pull origin main
+git add .
+git commit -m "feature description"
+git push origin main
+ */
 @Composable
 fun MyBuisneCard(
     slug :String,

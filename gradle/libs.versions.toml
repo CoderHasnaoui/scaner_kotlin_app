@@ -16,6 +16,7 @@ foundationLayout = "1.10.2"
 cameraCamera2Pipe = "1.6.0-beta01"
 uiText = "1.10.2"
 datastoreCore = "1.2.0"
+foundationLayoutVersion = "1.10.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,6 +41,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-camera-camera2-pipe = { group = "androidx.camera", name = "camera-camera2-pipe", version.ref = "cameraCamera2Pipe" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

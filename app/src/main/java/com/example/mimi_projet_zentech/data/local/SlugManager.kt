@@ -1,8 +1,12 @@
 package com.example.mimi_projet_zentech.data.local
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.example.mimi_projet_zentech.ui.theme.TokenStrings
 import androidx.core.content.edit
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 class SlugManager (private val context: Context){
     // get Slug
@@ -14,15 +18,32 @@ class SlugManager (private val context: Context){
 // clear Selected Slug
     fun clearSelectedSlug() {
         context.getSharedPreferences(TokenStrings.PREFE_SLUG_NAME, Context.MODE_PRIVATE)
-            .edit {
-                remove(TokenStrings.SELECTE_SLUG)
-            }
+            .edit()
+            . remove(TokenStrings.SELECTE_SLUG)
+            .commit()
+
     }
+
     // Save Slug
     fun saveSlug(slug: String) {
         context.getSharedPreferences(TokenStrings.PREFE_SLUG_NAME, Context.MODE_PRIVATE)
-            .edit {
-                putString(TokenStrings.SELECTE_SLUG, slug)
+            .edit()
+            .putString(TokenStrings.SELECTE_SLUG, slug)
+            .commit()
+    }
+
+    fun slugFlow(): Flow<String?> = callbackFlow {
+        val prefs = context.getSharedPreferences(TokenStrings.PREFE_SLUG_NAME, Context.MODE_PRIVATE)
+
+        // Emit current value immediately
+        trySend(prefs.getString(TokenStrings.SELECTE_SLUG, null))
+
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == TokenStrings.SELECTE_SLUG) {
+                trySend(prefs.getString(TokenStrings.SELECTE_SLUG, null))
             }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 }

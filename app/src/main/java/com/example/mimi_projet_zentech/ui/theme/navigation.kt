@@ -2,12 +2,10 @@ package com.example.mimi_projet_zentech.ui.theme
 
 import ScannerScreen
 import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -23,12 +21,14 @@ import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.splash.SplashScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.DeniedScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeScreen
+import com.example.mimi_projet_zentech.ui.theme.ui.multipleAccount.AccountScreen
+import com.example.mimi_projet_zentech.ui.theme.ui.multipleAccount.ProfileManager.ManageAccountsScreen
+import com.example.mimi_projet_zentech.ui.theme.ui.multipleAccount.ProfileManager.ManageProfileScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.profileScreen.profileScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInScrenn
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInViewModel
+import com.example.mimi_projet_zentech.ui.theme.ui.signIn.passwordConfirmation.Pass_confirmScrren
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.ValidScreen
-import com.example.mimi_projet_zentech.ui.theme.util.NAV_ARG_EMAIL
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.permission.CameraPermission
 
@@ -62,6 +62,10 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
 
             )
         }
+        composable(Screen.Account.route) {
+            AccountScreen(navController = navController)
+        }
+
 
         composable(
             route =  Screen.Login.route,
@@ -83,6 +87,26 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
             val  forceSelected = it.arguments?.getBoolean("forceSelect")?:false
 
             HomeScreen(navController , forceSelected)
+
+        }
+
+        composable(Screen.passwordConfirm.route , arguments = listOf(navArgument("email") {
+            type = NavType.StringType
+        }))
+        {it->
+            val  email = it.arguments?.getString("email")?: ""
+
+            Pass_confirmScrren(navController , email = email)
+
+        }
+
+        composable(Screen.ManageProfile.route , arguments = listOf(navArgument("email") {
+            type = NavType.StringType
+        }))
+        {it->
+            val  email = it.arguments?.getString("email")?: ""
+
+            ManageProfileScreen(navController , email = email)
 
         }
 
@@ -120,6 +144,9 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
 
         composable (Screen.Profile.route){
             profileScreen(navController , isDarkModeState)
+        }
+        composable (Screen.ManageAccounts.route){
+            ManageAccountsScreen(navController)
         }
 //        composable(
 //            route = Screen.Profile.route,

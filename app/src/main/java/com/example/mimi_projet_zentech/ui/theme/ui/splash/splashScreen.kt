@@ -48,9 +48,14 @@ fun SplashScreen(navController: NavController , viewModel: splashViewModel = vie
                     }
                 }
                 is UserState.Logout ->{
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.Account.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
+
+//                    until i can make my Sitch Accoiunt
+//                    navController.navigate(Screen.Login.route) {
+//                        popUpTo(Screen.Splash.route) { inclusive = true }
+//                    }
                 }
                 is UserState.Loading -> {}
             }

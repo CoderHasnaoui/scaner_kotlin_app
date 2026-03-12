@@ -173,7 +173,7 @@ fun profileScreen(
                             Text("Change", color = Color.White)
                         }
                     }
-            // Location List
+                    // Location List
                     if (viewModel.selectedMerchant != null) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp)) {
@@ -214,7 +214,7 @@ fun profileScreen(
                     viewModel.tokenManager.clearToken()
                     viewModel.tokenManager.logOut()
                     viewModel.slugManager.clearSelectedSlug()
-                    navController.navigate(Screen.Login.route) { popUpTo(0) { inclusive = true } }
+                    navController.navigate(Screen.Account.route) { popUpTo(0) { inclusive = true } }
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDE0000)),

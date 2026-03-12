@@ -1,4 +1,4 @@
-package com.example.mimi_projet_zentech.data.local.entity
+package com.example.mimi_projet_zentech.data.local.entity.merchantEntity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

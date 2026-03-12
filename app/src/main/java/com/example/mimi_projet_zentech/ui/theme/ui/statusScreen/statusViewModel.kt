@@ -14,6 +14,10 @@ import com.example.mimi_projet_zentech.data.repository.TicketRepository
 import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
+import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanUiState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 import kotlinx.coroutines.launch
 import kotlin.getValue
@@ -22,24 +26,19 @@ class ValidViewModel (application: Application): AndroidViewModel(application) {
     val   themeRepo = ThemeRepository(application)
     var isDark =  themeRepo.isDarkMode()
         private set
-    private val tokenManager  = TokenManager(getApplication())
-    private val api  by lazy {
-        RetrofitInstance.getPrivateApi(
-        tokenManager ,
-        onTokenExpired = { SessionManager.notifyTokenExpired()}
-
-    ) }
+    private val tokenManager = TokenManager(application)
+    private val api by lazy {
+        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
+    }
     private val ticketRepository by lazy { TicketRepository(api) }
-    var ticket by mutableStateOf<TicketInfos?>(null)
-        private set
-    var isLoading by mutableStateOf(true)
-        private  set
-    var isReady by mutableStateOf(false)
-    private set
+
+    // Use a StateFlow for the UI
+    private val _stateUi = MutableStateFlow<ValidUiState>(ValidUiState.Loading)
+    val uiState: StateFlow<ValidUiState> = _stateUi.asStateFlow()
     fun loadTicket(ticketNum:String? , scanStatus : ScanStatus) {
         if (scanStatus == ScanStatus.NOT_FOUND || ticketNum.isNullOrEmpty()) {
-            isReady = true
-            isLoading = false
+            _stateUi.value = ValidUiState.Success(null)
+
             return
         }
         viewModelScope.launch {
@@ -47,12 +46,13 @@ class ValidViewModel (application: Application): AndroidViewModel(application) {
 //                val response = api.checkTicket(ticketNum)
                 val response = ticketRepository.checkTicket(ticketNum)
                 if (response.isSuccessful) {
-                    ticket = response.body()
+
+                    _stateUi.value = ValidUiState.Success(response.body())
+                }else{
+                    _stateUi.value = ValidUiState.Error("Not Found")
                 }
-            } catch (e: Exception) { }
-            finally {
-                isReady = true
-                isLoading=false
+            } catch (e: Exception) { _stateUi.value = ValidUiState.Error(e.message ?: "Error")
+//                isLoading=false
             }
         }
 

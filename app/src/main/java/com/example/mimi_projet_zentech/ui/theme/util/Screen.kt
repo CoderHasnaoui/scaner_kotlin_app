@@ -5,6 +5,17 @@ import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 
 sealed class Screen (val route :String) {
     object Splash : Screen("splash")
+    object  ManageAccounts  : Screen("manage_account")
+    object passwordConfirm : Screen("password_confirm/{email}") {
+
+        fun getRoute(email: String) = "password_confirm/$email"
+    }
+    object ManageProfile : Screen("manage_profile/{email}") {
+
+        fun getRoute(email: String) = "manage_profile/$email"
+    }
+    object Account : Screen("account")
+    object SignUp : Screen("signup")
 
     object  Login : Screen("login"  )
 

@@ -4,8 +4,8 @@ import com.example.mimi_projet_zentech.data.local.dao.UserAccountDao
 import com.example.mimi_projet_zentech.data.local.entity.userAccount.UserAccount
 import kotlinx.coroutines.flow.Flow
 
-class UserAccount (private val dao: UserAccountDao) {
-    val allUsers: Flow<List<UserAccount>>? = dao.getUsers()
+class UserAccountRepository(private val dao: UserAccountDao) {
+    val allUsers: Flow<List<UserAccount>> = dao.getUsers()
     suspend fun getUserByEmail(email: String): UserAccount? {
         return dao.getUserByemaill(email)
     }
@@ -14,6 +14,9 @@ class UserAccount (private val dao: UserAccountDao) {
     }
     suspend fun deleteUser(email: String) {
         dao.deleteUser(email)
+    }
+    suspend fun updateLastSession(email: String , time:Long){
+        dao.updateLastSession(email , time)
     }
 
 }

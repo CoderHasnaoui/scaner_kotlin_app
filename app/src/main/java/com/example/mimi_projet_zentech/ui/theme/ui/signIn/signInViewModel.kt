@@ -5,18 +5,28 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
+import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
+import com.example.mimi_projet_zentech.data.local.entity.userAccount.UserAccount
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
+import com.example.mimi_projet_zentech.data.repository.MerchantRepository
+import com.example.mimi_projet_zentech.data.repository.UserAccountRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
 
 
 class  SignInViewModel (application: Application): AndroidViewModel(application) {
-
+    // db Local CAll
+    val  db = DatabaseProvider.getDatabase(application)
+    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
     //Api Calles
     private val tokenManager = TokenManager(getApplication())
     private val repository = AuthRepository(RetrofitInstance.publicApi)
@@ -78,6 +88,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                     )
                     val response = repository.login(request)
                     if (response.isSuccessful) {
+                        val loginStartTime = System.currentTimeMillis()
                         val data = response.body()
                         val token = data?.token
                         val name = data?.user?.name?:"unknow "
@@ -86,8 +97,28 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                             tokenManager.saveToken(token)
                             tokenManager.setLoggedIn(true)
                             userRepository.saveUserInfo(name , emailApi)
+
+                            // save data in storeage
+                            withContext(Dispatchers.IO){
+                                val user = RoomRepo.getUserByEmail(emailApi)
+                                if(user==null){
+                                    RoomRepo.saveUser(UserAccount(email = emailApi ,  name  , initilas =name.take(1) ,  loginStartTime ))
+
+                                }else{
+                                    RoomRepo.updateLastSession(emailApi , loginStartTime)
+                                }
+                            }
+                            // ← NEW: check if first time → ask biometric
+                            val isFirstTime = RoomRepo.getUserByEmail(emailApi)?.let { true } ?: false
+                            val biometricEnabled = userRepository.isBiometricEnabled().first()
+                            if (!biometricEnabled) {
+                                _state.value = SignInState.ShowBiometricDialog  // ← ask user
+                            } else {
+                                onLoginSuccess?.invoke()
+                            }
                             //cal lamda to go Login
-                            onLoginSuccess?.invoke()
+//                            onLoginSuccess?.invoke()
+
                         } else {
                             _state.value = SignInState.Error("Invalid credentials")
                         }
@@ -102,9 +133,6 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                             _state.value = SignInState.Error("Login failed. Please try again.")
                         }
 
-
-
-
                     }
                 } catch (e: Exception) {
                     _state.value = SignInState.Error("Something Wrong.")
@@ -113,6 +141,13 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
 //                    _uiState.update { it.copy(isLoading = false) }
 //                }
             }
+    }
+    fun onBiometricDialogResult(accepted: Boolean) {
+        viewModelScope.launch {
+            userRepository.setBiometricEnabled(accepted)  // true or false
+            _state.value = SignInState.Ready
+            onLoginSuccess?.invoke()
+        }
     }
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = getApplication<Application>()

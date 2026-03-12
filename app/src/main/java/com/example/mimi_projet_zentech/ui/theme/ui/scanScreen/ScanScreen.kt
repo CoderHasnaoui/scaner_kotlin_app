@@ -20,12 +20,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.R
 
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.ManualEntryDialog
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.TopOptionsMenu
+import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanUiState
 import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.ui.components.ZxingQrScanner
@@ -33,28 +35,28 @@ import kotlinx.coroutines.launch
 import java.lang.Exception
 
 @Composable
-fun ScannerScreen(navController: NavController) {
+fun ScannerScreen(navController: NavController , viewModel: ScanViewMode = viewModel()) {
     // --- States ---
+    val state  by viewModel.uiState.collectAsStateWithLifecycle()
     var showManualDialog by remember { mutableStateOf(false) }
     var isFlashOn by remember { mutableStateOf(false) } // 🔹 Flash state
-    var  viewModel: ScanViewMode = viewModel ()
 
 
     // --- 1. INFINITE ANIMATION LOGIC ---
     val infiniteTransition = rememberInfiniteTransition(label = "scanner")
 
     LaunchedEffect(Unit) {
-        viewModel.resetState()
         viewModel.checkToken()
         viewModel.onNavigate = {ticketNum  ,scanStatus ->
             navController.navigate(
                 Screen.ScanRes.getRoute(ticketNum = ticketNum, scanRes = scanStatus)
             )
-
+            viewModel.clearNavigation()
         }
+
     }
-    // waiting response from Api to see if token Expired
-    if (!viewModel.isReady) {
+    // waith reponse for Api  if tocen Expizred
+    if (state is ScanUiState.Initializing) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,7 +68,7 @@ fun ScannerScreen(navController: NavController) {
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
 
-        if (previousRoute == Screen.Home.route || previousRoute == null) {
+        if (previousRoute == Screen.Home.route || previousRoute == null  || previousRoute == Screen.passwordConfirm.route) {
             //   previeus  is Home or none so  exit app
             (navController.context as? Activity)?.finish()
         } else {
@@ -107,7 +109,7 @@ fun ScannerScreen(navController: NavController) {
 
         // Camera Background
         ZxingQrScanner(
-            isPaused = showManualDialog || viewModel.isProcessing,
+            isPaused = showManualDialog || state is ScanUiState.Verifiying,
             isFlashOn = isFlashOn,
             onLongPress = { isFlashOn = !isFlashOn },
             onResult = { result -> viewModel.handleScanResult(result) }
@@ -189,7 +191,7 @@ fun ScannerScreen(navController: NavController) {
         }
 
         // VERIFYING LOADER OVERLAY
-        if (viewModel.isProcessing) {
+        if (state is ScanUiState.Verifiying) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

@@ -23,29 +23,27 @@ import com.google.mlkit.vision.barcode.common.Barcode
 @Composable
 fun ZxingQrScanner(
     isFlashOn: Boolean,
-    isPaused: Boolean,
-    onResult: (String) -> Unit ,
+    isPaused: Boolean, // This is what changes when Dialogue or Loading happens
+    onResult: (String) -> Unit,
     onLongPress: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // --- THE FIX ---
+    // This creates a "live" reference that the analyzer can read
+    // even though the analyzer was created inside a LaunchedEffect(Unit)
+    val pausedState by rememberUpdatedState(isPaused)
+
     val previewView = remember { PreviewView(context) }
     val cameraController = remember { LifecycleCameraController(context) }
-    var isCameraReady by remember { mutableStateOf(false) }
-    LaunchedEffect(isPaused) {
-        if (isPaused) {
-            cameraController.unbind()
-            isCameraReady = false
-        } else {
-            cameraController.bindToLifecycle(lifecycleOwner)
-            isCameraReady =  true
-        }
+
+    // Control the Flash
+    LaunchedEffect(isFlashOn) {
+        cameraController.enableTorch(isFlashOn)
     }
 
-    LaunchedEffect(isFlashOn , isCameraReady) {
-        if(isCameraReady)cameraController.enableTorch(isFlashOn)
-    }
-
+    // Setup Camera and Analyzer (Runs ONLY ONCE)
     LaunchedEffect(Unit) {
         cameraController.imageAnalysisTargetSize = CameraController.OutputSize(
             android.util.Size(1280, 720)
@@ -64,11 +62,17 @@ fun ZxingQrScanner(
                 CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
                 ContextCompat.getMainExecutor(context)
             ) { result ->
-                if (!isPaused) {
+                // --- THE CRITICAL CHECK ---
+                // We check the "live" pausedState here.
+                // If it's true, we stop right here and ignore the scan.
+                if (!pausedState) {
                     val barcodeResults = result.getValue(barcodeScanner)
                     if (!barcodeResults.isNullOrEmpty()) {
                         barcodeResults[0].rawValue?.let { value ->
-                            onResult(value)
+                            // Check one more time before calling onResult
+                            if (!pausedState) {
+                                onResult(value)
+                            }
                         }
                     }
                 }
@@ -77,13 +81,11 @@ fun ZxingQrScanner(
 
         cameraController.bindToLifecycle(lifecycleOwner)
         previewView.controller = cameraController
-        isCameraReady = true
     }
 
     AndroidView(
         factory = { previewView },
         update = { view ->
-
             view.setOnLongClickListener {
                 onLongPress()
                 true

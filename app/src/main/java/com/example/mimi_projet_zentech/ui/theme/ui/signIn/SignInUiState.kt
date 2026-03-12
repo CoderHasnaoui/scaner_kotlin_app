@@ -11,6 +11,8 @@ data class SignInData(
 sealed interface SignInState {
     object Ready  : SignInState // default
     object Loading : SignInState
+    object ShowBiometricDialog : SignInState
     data class Success(val userName: String) : SignInState
     data class Error(val message: String) : SignInState
+
 }
