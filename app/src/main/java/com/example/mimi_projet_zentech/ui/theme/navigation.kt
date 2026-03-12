@@ -24,6 +24,7 @@ import com.example.mimi_projet_zentech.ui.theme.ui.splash.SplashScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.deniedScreen.DeniedScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeScreen
 import com.example.mimi_projet_zentech.ui.theme.ui.profileScreen.profileScreen
+import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanViewMode
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInScrenn
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInViewModel
 import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.ValidScreen
@@ -35,7 +36,7 @@ import com.yourapp.qrscanner.permission.CameraPermission
 @Composable
 fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val context = LocalContext.current
-
+    val sharedViewModel : ScanViewMode = viewModel ()
     val navController = rememberNavController()
 //    val tokenManager = remember { TokenManager(context) }
 //    val isLoggedIn = remember { tokenManager.isLoggedIn() }
@@ -88,7 +89,7 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
         composable(Screen.ScannerScreen.route) {
             CameraPermission(
 
-                onGranted = { ScannerScreen(navController ) } ,
+                onGranted = { ScannerScreen(navController  , sharedViewModel) } ,
                 navController
             )
         }
@@ -114,7 +115,7 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
         ){
 //        { backStackEntry ->
 //            val slug = backStackEntry.arguments?.getInt("slug")
-            DeniedScreen(navController)
+            DeniedScreen(navController , sharedViewModel)
         }
 
         composable (Screen.Profile.route){
