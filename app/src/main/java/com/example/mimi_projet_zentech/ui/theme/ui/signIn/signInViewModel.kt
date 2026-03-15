@@ -2,6 +2,10 @@ package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
 import android.app.Application
 import android.content.Context
+
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
@@ -20,7 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Dispatcher
+import androidx.biometric.BiometricPrompt
 
 
 class  SignInViewModel (application: Application): AndroidViewModel(application) {
@@ -111,6 +115,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                             // ← NEW: check if first time → ask biometric
                             val isFirstTime = RoomRepo.getUserByEmail(emailApi)?.let { true } ?: false
                             val biometricEnabled = userRepository.isBiometricEnabled().first()
+                            val biometricAsked = userRepository.isBiometricAsked().first()
                             if (!biometricEnabled) {
                                 _state.value = SignInState.ShowBiometricDialog  // ← ask user
                             } else {
@@ -142,14 +147,73 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
 //                }
             }
     }
-    fun onBiometricDialogResult(accepted: Boolean) {
-        viewModelScope.launch {
-            userRepository.setBiometricEnabled(accepted)  // true or false
-            _state.value = SignInState.Ready
-            onLoginSuccess?.invoke()
+    @RequiresApi(Build.VERSION_CODES.R)
+    // dialog result — launch biometric to ENCRYPT password
+    fun onBiometricDialogResult(accepted: Boolean, activity: FragmentActivity) {
+        if (!accepted) {
+            // ← user clicked "Not now" → just go home
+            viewModelScope.launch {
+                userRepository.setBiometricAsked(true)
+                onLoginSuccess?.invoke()
+                _state.value = SignInState.Ready
+            }
+            return
         }
+
+        // ← user clicked "Enable" → show fingerprint prompt
+        val cipher = tokenManager.getEncryptCipher()
+
+        val prompt = BiometricPrompt(
+            activity,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult  // ← result is HERE
+                ) {
+                    val authenticatedCipher = result.cryptoObject?.cipher!!
+                    val (encryptedPassword, iv) = tokenManager.encryptPassword(
+                        authenticatedCipher,
+                        _fields.value.password
+                    )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.IO) {
+                            RoomRepo.updateEncryptedPassword(
+                                email = _fields.value.email,
+                                encryptedPassword = encryptedPassword,
+                                passwordIv = iv
+                            )
+                        }
+                        userRepository.setBiometricAsked(true)
+                        userRepository.setBiometricEnabled(true)
+                        onLoginSuccess?.invoke()
+                        _state.value = SignInState.Ready
+                    }
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    // ← cancelled fingerprint → just go home, biometric stays false
+                    viewModelScope.launch {
+                        userRepository.setBiometricAsked(true)
+                        onLoginSuccess?.invoke()
+                        _state.value = SignInState.Ready
+                    }
+                }
+
+                override fun onAuthenticationFailed() {}
+            }
+        )
+
+        prompt.authenticate(
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Enable Fingerprint Login")
+                .setSubtitle("Verify your fingerprint to enable quick login")
+                .setNegativeButtonText("Cancel")
+                .build(),
+            BiometricPrompt.CryptoObject(cipher)
+        )
     }
     private fun isNetworkAvailable(): Boolean {
+
+
         val connectivityManager = getApplication<Application>()
             .getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false

@@ -45,6 +45,7 @@ import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
 import android.content.Intent
 import android.provider.Settings
+import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -86,11 +87,30 @@ fun AccountScreen(navController: NavController ,    viewModel: AccountViewModel 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun singleAccountUi(navController: NavController , user: UserAccount ) {
+
+
+
    val  viewModel: AccountViewModel = viewModel()
     val context = LocalContext.current
     val activity = context as FragmentActivity
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
+    val loginError by viewModel.loginError.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.onLoginSuccess = {
+            navController.navigate(Screen.Home.getRoute()) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+    LaunchedEffect(isBiometricEnabled) {
+        Log.d("BIOMETRIC", "isBiometricEnabled = $isBiometricEnabled")
+    }
 
+    LaunchedEffect(loginError) {
+        if (loginError) {
+            navController.navigate(Screen.passwordConfirm.getRoute(user.email))
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -135,10 +155,13 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
                                 viewModel.launchBiometric(
                                     activity = activity,
                                     user = user,
-                                    onSuccess = {
-                                        navController.navigate(Screen.Home.getRoute()) {
-                                            popUpTo(0) { inclusive = true }
-                                        }
+                                    onSuccess = { authenticatedCipher ->
+                                        val encryptedPassword = user.encryptedPassword ?: return@launchBiometric
+                                        val password = viewModel.tokenManager.decryptPassword(
+                                            authenticatedCipher,
+                                            encryptedPassword  // ← from Room
+                                        )
+                                        viewModel.loginWithBiometric(user.email, password)
                                     },
                                     onFallback = {
                                         navController.navigate(Screen.passwordConfirm.getRoute(user.email))
@@ -207,7 +230,6 @@ fun multipleAccount(navController: NavController ,users :  List<UserAccount>) {
         }
 
         Spacer(modifier = Modifier.height(screenHeight.value*0.1.dp))
-
         // app icon
         iconApp()
 
@@ -221,7 +243,5 @@ fun multipleAccount(navController: NavController ,users :  List<UserAccount>) {
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
-
-
 
 

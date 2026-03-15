@@ -1,5 +1,9 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.signIn
 
+import android.annotation.SuppressLint
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -28,21 +32,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
+@RequiresApi(Build.VERSION_CODES.R)
+@SuppressLint("ContextCastToActivity")
 @Composable
 fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavController) {
 
     val focusManager = LocalFocusManager.current
+    val activity = LocalContext.current as FragmentActivity
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val field by viewModel.fields.collectAsStateWithLifecycle()
@@ -53,6 +62,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
             }
         }
     }
+
     // Navigate if login is successful
 // After your LaunchedEffect
 
@@ -71,16 +81,20 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                 ){
                 if (state is SignInState.ShowBiometricDialog) {
                     AlertDialog(
-                        onDismissRequest = { viewModel.onBiometricDialogResult(false) },
+                        onDismissRequest = { viewModel.onBiometricDialogResult(false, activity) },
                         title = { Text("Enable Fingerprint Login?") },
                         text = { Text("Use your fingerprint to log in faster next time.") },
                         confirmButton = {
-                            TextButton(onClick = { viewModel.onBiometricDialogResult(true) }) {
+                            TextButton(onClick = {
+                                viewModel.onBiometricDialogResult(true, activity)  // ← pass activity
+                            }) {
                                 Text("Enable", color = Color(0xFF0452F0))
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { viewModel.onBiometricDialogResult(false) }) {
+                            TextButton(onClick = {
+                                viewModel.onBiometricDialogResult(false, activity)
+                            }) {
                                 Text("Not now", color = Color.Gray)
                             }
                         }

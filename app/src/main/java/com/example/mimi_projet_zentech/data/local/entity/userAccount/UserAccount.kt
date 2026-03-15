@@ -9,6 +9,9 @@ data class UserAccount(
             val email: String,
             val name :String ,
             val initilas : String ,
-            val lastLoginTime: Long = 0L
+            val lastLoginTime: Long = 0L ,
+
+            val encryptedPassword:String? = null ,
+            val passwordIv :String? =   null ,
 
         )

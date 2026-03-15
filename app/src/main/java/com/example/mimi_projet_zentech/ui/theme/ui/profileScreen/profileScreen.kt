@@ -1,5 +1,8 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.profileScreen
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,13 +45,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
+import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInInput
+import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignIncon
+import javax.crypto.Cipher
 
 
-
+@RequiresApi(Build.VERSION_CODES.R)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun profileScreen(
@@ -56,6 +63,8 @@ fun profileScreen(
     isDarkModeState: MutableState<Boolean>, // This controls the app theme
     viewModel: ProfileViewModel = viewModel()
 ) {
+    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
     val userName by viewModel.userName.collectAsStateWithLifecycle()
     val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
@@ -206,6 +215,14 @@ fun profileScreen(
                 )
             }
 
+            // --- 4. Biometric ---
+
+            BiometricSwitchSection(
+                viewModel = viewModel,
+                email = userEmail  // ← pass current user email
+            )
+
+
             Spacer(modifier = Modifier.weight(1f))
 
             // --- 4. Log Out ---
@@ -225,5 +242,174 @@ fun profileScreen(
                 Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.White)
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.R)
+@Composable
+fun BiometricSwitchSection(
+    viewModel: ProfileViewModel,
+    email: String
+) {
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = context as FragmentActivity
+    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
+    val isSwitchOn = isBiometricEnabled && currentUser?.encryptedPassword != null
+
+
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    // ← BiometricPrompt lives here in the screen
+    fun launchEncryptPrompt(cipher: Cipher, plainPassword: String) {
+        val prompt = BiometricPrompt(
+            activity,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    val authenticatedCipher = result.cryptoObject?.cipher!!
+                    // ← send authenticated cipher back to ViewModel
+                    viewModel.saveEncryptedPassword(
+                        authenticatedCipher,
+                        plainPassword,
+                        email
+                    )
+                    showPasswordDialog = false
+                    password = ""
+                    isLoading = false
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    passwordError = "Fingerprint cancelled"
+                    isLoading = false
+                }
+
+                override fun onAuthenticationFailed() {}
+            }
+        )
+
+        prompt.authenticate(
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Enable Fingerprint Login")
+                .setSubtitle("Verify your fingerprint to enable quick login")
+                .setNegativeButtonText("Cancel")
+                .build(),
+            BiometricPrompt.CryptoObject(cipher)
+        )
+    }
+
+    if (showPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showPasswordDialog = false
+                password = ""
+                passwordError = null
+            },
+            title = { Text("Enable Fingerprint Login") },
+            text = {
+                Column {
+                    Text(
+                        "Enter your password to enable fingerprint login",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    SignInInput(
+                        title = "password",
+                        value = password,
+
+                        onValueChange = {
+                            password = it
+                            passwordError = null
+                        },
+                        icon = SignIncon.Password,
+                        isPasswordField = true,
+                        errorMessage = passwordError,
+                        enableField = !isLoading
+                    )
+                    if (isLoading) {
+                        Spacer(Modifier.height(8.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(Alignment.CenterHorizontally),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (password.isEmpty()) {
+                            passwordError = "Field is required"
+                            return@TextButton
+                        }
+                        if (password.length < 8) {
+                            passwordError = "Password must be at least 8 characters"
+                            return@TextButton
+                        }
+                        isLoading = true
+                        viewModel.verifyPasswordAndGetCipher(
+                            password = password,
+                            email = email,
+                            onSuccess = { cipher, plainPassword ->
+                                // ← launch biometric prompt from screen
+                                launchEncryptPrompt(cipher, plainPassword)
+                            },
+                            onError = { error ->
+                                isLoading = false
+                                passwordError = error
+                            }
+                        )
+                    },
+                    enabled = !isLoading
+                ) {
+                    Text("Confirm", color = Color(0xFF0064e0))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showPasswordDialog = false
+                    password = ""
+                    passwordError = null
+                }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "Fingerprint Login",
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Switch(
+            checked = isSwitchOn,
+            onCheckedChange = { newValue ->
+                if (newValue) {
+                    viewModel.onBiometricSwitchEnabled(
+                        onNeedPassword = {
+                            showPasswordDialog = true  // ← no encrypted password → ask password
+                        },
+                        onDirectEnable = {
+                            // ← already has encrypted password → just enable
+                            // nothing to show, already handled in ViewModel
+                        }
+                    )                } else {
+                    viewModel.setBiometricEnabled(false)  // ← just disable
+                }
+            }
+        )
     }
 }

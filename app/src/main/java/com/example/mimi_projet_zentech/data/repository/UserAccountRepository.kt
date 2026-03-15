@@ -18,5 +18,10 @@ class UserAccountRepository(private val dao: UserAccountDao) {
     suspend fun updateLastSession(email: String , time:Long){
         dao.updateLastSession(email , time)
     }
-
+    suspend fun updateEncryptedPassword(email: String, encryptedPassword: String, passwordIv: String) {
+        dao.updateEncryptedPassword(email, encryptedPassword, passwordIv)
+    }
+    fun getUserByEmailFlow(email :String) : Flow<UserAccount?>{
+       return dao.getUserByEmailFlow(email)
+    }
 }
