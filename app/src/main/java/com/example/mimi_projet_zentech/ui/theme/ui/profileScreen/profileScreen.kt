@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mimi_projet_zentech.ui.theme.SignInStrings
+import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInInput
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignIncon
 import javax.crypto.Cipher
@@ -219,7 +220,7 @@ fun profileScreen(
 
             BiometricSwitchSection(
                 viewModel = viewModel,
-                email = userEmail  // ← pass current user email
+                email = userEmail
             )
 
 
@@ -254,6 +255,7 @@ fun BiometricSwitchSection(
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = context as FragmentActivity
+    val tokenManager = viewModel.tokenManager
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
     val isSwitchOn = isBiometricEnabled && currentUser?.encryptedPassword != null
 
@@ -263,44 +265,7 @@ fun BiometricSwitchSection(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // ← BiometricPrompt lives here in the screen
-    fun launchEncryptPrompt(cipher: Cipher, plainPassword: String) {
-        val prompt = BiometricPrompt(
-            activity,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-                    val authenticatedCipher = result.cryptoObject?.cipher!!
-                    // ← send authenticated cipher back to ViewModel
-                    viewModel.saveEncryptedPassword(
-                        authenticatedCipher,
-                        plainPassword,
-                        email
-                    )
-                    showPasswordDialog = false
-                    password = ""
-                    isLoading = false
-                }
 
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    passwordError = "Fingerprint cancelled"
-                    isLoading = false
-                }
-
-                override fun onAuthenticationFailed() {}
-            }
-        )
-
-        prompt.authenticate(
-            BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Enable Fingerprint Login")
-                .setSubtitle("Verify your fingerprint to enable quick login")
-                .setNegativeButtonText("Cancel")
-                .build(),
-            BiometricPrompt.CryptoObject(cipher)
-        )
-    }
 
     if (showPasswordDialog) {
         AlertDialog(
@@ -357,9 +322,21 @@ fun BiometricSwitchSection(
                         viewModel.verifyPasswordAndGetCipher(
                             password = password,
                             email = email,
-                            onSuccess = { cipher, plainPassword ->
-                                // ← launch biometric prompt from screen
-                                launchEncryptPrompt(cipher, plainPassword)
+                            onSuccess = { _, plainPassword ->
+                                // ← replace launchEncryptPrompt with BiometricHelper
+                                BiometricHelper(activity, tokenManager).launchEncrypt(
+                                    password = plainPassword,
+                                    onSuccess = { encryptedPassword, iv ->
+                                        viewModel.saveEncryptedPassword(encryptedPassword, iv, email)
+                                        showPasswordDialog = false
+                                        password = ""
+                                        isLoading = false
+                                    },
+                                    onError = {
+                                        passwordError = "Fingerprint cancelled"
+                                        isLoading = false
+                                    }
+                                )
                             },
                             onError = { error ->
                                 isLoading = false
@@ -400,14 +377,13 @@ fun BiometricSwitchSection(
                 if (newValue) {
                     viewModel.onBiometricSwitchEnabled(
                         onNeedPassword = {
-                            showPasswordDialog = true  // ← no encrypted password → ask password
+                            showPasswordDialog = true
                         },
-                        onDirectEnable = {
-                            // ← already has encrypted password → just enable
-                            // nothing to show, already handled in ViewModel
-                        }
+//                        onDirectEnable = {
+//
+//                        }
                     )                } else {
-                    viewModel.setBiometricEnabled(false)  // ← just disable
+                    viewModel.setBiometricEnabled(false)  //  just disable
                 }
             }
         )

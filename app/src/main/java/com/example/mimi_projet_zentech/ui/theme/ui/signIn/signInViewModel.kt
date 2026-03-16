@@ -25,10 +25,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.biometric.BiometricPrompt
+import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
 
 
 class  SignInViewModel (application: Application): AndroidViewModel(application) {
-    // db Local CAll
+    // db Local
     val  db = DatabaseProvider.getDatabase(application)
     private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
     //Api Calles
@@ -61,7 +62,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
 
         val passwordErr = when {
             curentState.password.isEmpty() -> "Field is Required"
-            curentState.password.length<8 ->  "Password must be at least 5 characters"
+            curentState.password.length<8 ->  "Password must be at least 8 characters"
             else -> null
         }
 
@@ -112,12 +113,12 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                                     RoomRepo.updateLastSession(emailApi , loginStartTime)
                                 }
                             }
-                            // ← NEW: check if first time → ask biometric
-                            val isFirstTime = RoomRepo.getUserByEmail(emailApi)?.let { true } ?: false
+                            // if the first Time Ask BiomeT
                             val biometricEnabled = userRepository.isBiometricEnabled().first()
                             val biometricAsked = userRepository.isBiometricAsked().first()
-                            if (!biometricEnabled) {
-                                _state.value = SignInState.ShowBiometricDialog  // ← ask user
+
+                            if (!biometricAsked) {
+                                _state.value = SignInState.ShowBiometricDialog  // asking User  ??
                             } else {
                                 onLoginSuccess?.invoke()
                             }
@@ -147,11 +148,11 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
 //                }
             }
     }
-    @RequiresApi(Build.VERSION_CODES.R)
+
     // dialog result — launch biometric to ENCRYPT password
+    @RequiresApi(Build.VERSION_CODES.R)
     fun onBiometricDialogResult(accepted: Boolean, activity: FragmentActivity) {
         if (!accepted) {
-            // ← user clicked "Not now" → just go home
             viewModelScope.launch {
                 userRepository.setBiometricAsked(true)
                 onLoginSuccess?.invoke()
@@ -160,55 +161,31 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
             return
         }
 
-        // ← user clicked "Enable" → show fingerprint prompt
-        val cipher = tokenManager.getEncryptCipher()
 
-        val prompt = BiometricPrompt(
-            activity,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult  // ← result is HERE
-                ) {
-                    val authenticatedCipher = result.cryptoObject?.cipher!!
-                    val (encryptedPassword, iv) = tokenManager.encryptPassword(
-                        authenticatedCipher,
-                        _fields.value.password
-                    )
-                    viewModelScope.launch {
-                        withContext(Dispatchers.IO) {
-                            RoomRepo.updateEncryptedPassword(
-                                email = _fields.value.email,
-                                encryptedPassword = encryptedPassword,
-                                passwordIv = iv
-                            )
-                        }
-                        userRepository.setBiometricAsked(true)
-                        userRepository.setBiometricEnabled(true)
-                        onLoginSuccess?.invoke()
-                        _state.value = SignInState.Ready
+        BiometricHelper(activity, tokenManager).launchEncrypt(
+            password = _fields.value.password,
+            onSuccess = { encryptedPassword, iv ->
+                viewModelScope.launch {
+                    withContext(Dispatchers.IO) {
+                        RoomRepo.updateEncryptedPassword(
+                            email = _fields.value.email,
+                            encryptedPassword = encryptedPassword,
+                            passwordIv = iv
+                        )
                     }
+                    userRepository.setBiometricAsked(true)
+                    userRepository.setBiometricEnabled(true)
+                    onLoginSuccess?.invoke()
+                    _state.value = SignInState.Ready
                 }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    // ← cancelled fingerprint → just go home, biometric stays false
-                    viewModelScope.launch {
-                        userRepository.setBiometricAsked(true)
-                        onLoginSuccess?.invoke()
-                        _state.value = SignInState.Ready
-                    }
+            },
+            onError = {
+                viewModelScope.launch {
+                    userRepository.setBiometricAsked(true)
+                    onLoginSuccess?.invoke()
+                    _state.value = SignInState.Ready
                 }
-
-                override fun onAuthenticationFailed() {}
             }
-        )
-
-        prompt.authenticate(
-            BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Enable Fingerprint Login")
-                .setSubtitle("Verify your fingerprint to enable quick login")
-                .setNegativeButtonText("Cancel")
-                .build(),
-            BiometricPrompt.CryptoObject(cipher)
         )
     }
     private fun isNetworkAvailable(): Boolean {

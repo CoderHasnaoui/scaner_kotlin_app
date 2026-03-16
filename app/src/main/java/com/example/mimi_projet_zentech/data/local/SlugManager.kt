@@ -32,18 +32,5 @@ class SlugManager (private val context: Context){
             .commit()
     }
 
-    fun slugFlow(): Flow<String?> = callbackFlow {
-        val prefs = context.getSharedPreferences(TokenStrings.PREFE_SLUG_NAME, Context.MODE_PRIVATE)
 
-        // Emit current value immediately
-        trySend(prefs.getString(TokenStrings.SELECTE_SLUG, null))
-
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == TokenStrings.SELECTE_SLUG) {
-                trySend(prefs.getString(TokenStrings.SELECTE_SLUG, null))
-            }
-        }
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
 }

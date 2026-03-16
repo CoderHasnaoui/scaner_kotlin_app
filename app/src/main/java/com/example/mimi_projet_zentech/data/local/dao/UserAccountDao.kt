@@ -21,7 +21,7 @@ interface UserAccountDao {
     @Query("UPDATE user_account SET lastLoginTime = :sessionTime WHERE email = :email")
     suspend fun updateLastSession(email: String, sessionTime: Long)
     @Query("UPDATE user_account SET encryptedPassword = :encryptedPassword, passwordIv = :passwordIv WHERE email = :email")
-    suspend fun updateEncryptedPassword(email: String, encryptedPassword: String, passwordIv: String)
+    suspend fun updateEncryptedPassword(email: String, encryptedPassword: String?, passwordIv: String?)
     @Query("SELECT * FROM user_account WHERE email = :email")
     fun getUserByEmailFlow(email: String): Flow<UserAccount?>
 }

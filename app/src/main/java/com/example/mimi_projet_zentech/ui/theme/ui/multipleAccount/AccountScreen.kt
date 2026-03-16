@@ -147,7 +147,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 
 
                 to_login = {
-//                    val user = user ?: return@loginButton
+
                     if (isBiometricEnabled) {
                         when (viewModel.checkBiometricSupport(context)) {
 
@@ -155,14 +155,6 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
                                 viewModel.launchBiometric(
                                     activity = activity,
                                     user = user,
-                                    onSuccess = { authenticatedCipher ->
-                                        val encryptedPassword = user.encryptedPassword ?: return@launchBiometric
-                                        val password = viewModel.tokenManager.decryptPassword(
-                                            authenticatedCipher,
-                                            encryptedPassword  // ← from Room
-                                        )
-                                        viewModel.loginWithBiometric(user.email, password)
-                                    },
                                     onFallback = {
                                         navController.navigate(Screen.passwordConfirm.getRoute(user.email))
                                     }
@@ -170,13 +162,13 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
                             }
 
                             BiometricCheckResult.NotEnrolled -> {
-                                // send user to phone settings to add fingerprint
+                                // send user To Seting to make Fingerprint
                                 val intent = Intent(Settings.ACTION_BIOMETRIC_ENROLL)
                                 context.startActivity(intent)
                             }
 
                             BiometricCheckResult.NotSupported -> {
-                                // phone has no sensor → go to password
+                                // the phone has no sensor  so fo to PAss Screen
                                 navController.navigate(Screen.passwordConfirm.getRoute(user.email))
                             }
                         }

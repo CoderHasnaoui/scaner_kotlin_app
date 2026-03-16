@@ -63,10 +63,6 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
         }
     }
 
-    // Navigate if login is successful
-// After your LaunchedEffect
-
-
     // ---  Main Screen ---
             Column(modifier = Modifier
                 .fillMaxSize()
@@ -86,7 +82,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                         text = { Text("Use your fingerprint to log in faster next time.") },
                         confirmButton = {
                             TextButton(onClick = {
-                                viewModel.onBiometricDialogResult(true, activity)  // ← pass activity
+                                viewModel.onBiometricDialogResult(true, activity)
                             }) {
                                 Text("Enable", color = Color(0xFF0452F0))
                             }
@@ -95,7 +91,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                             TextButton(onClick = {
                                 viewModel.onBiometricDialogResult(false, activity)
                             }) {
-                                Text("Not now", color = Color.Gray)
+                                Text("Skip", color = Color.Gray)
                             }
                         }
                     )

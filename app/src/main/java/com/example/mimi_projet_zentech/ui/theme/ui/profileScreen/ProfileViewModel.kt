@@ -179,7 +179,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val cipher = tokenManager.getEncryptCipher()
                 Log.d("BIOMETRIC", "cipher ready → calling onSuccess")
                 onSuccess(cipher, password)
-
             } catch (e: Exception) {
                 Log.d("BIOMETRIC", "exception = ${e.message}")
                 onError("Something went wrong")
@@ -187,34 +186,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
     fun saveEncryptedPassword(
-        authenticatedCipher: Cipher,
-        password: String,
+        encryptedPassword: String,
+        iv: String,
         email: String
     ) {
         viewModelScope.launch {
-            Log.d("BIOMETRIC", "saveEncryptedPassword called email = $email")
-            val (encryptedPassword, iv) = tokenManager.encryptPassword(
-                authenticatedCipher,
-                password
-            )
-            Log.d("BIOMETRIC", "encrypted = $encryptedPassword")
             withContext(Dispatchers.IO) {
                 RoomRepo.updateEncryptedPassword(
                     email = email,
                     encryptedPassword = encryptedPassword,
                     passwordIv = iv
                 )
-                Log.d("BIOMETRIC", "saved in Room ✅")
             }
             setBiometricEnabled(true)
-            Log.d("BIOMETRIC", "biometricEnabled = true ✅")
+            Log.d("BIOMETRIC", "saved in Room")
         }
     }
 
     fun onBiometricSwitchEnabled(
-        onNeedPassword: () -> Unit,  // ← show dialog
-        onDirectEnable: () -> Unit   // ← just enable
+        onNeedPassword: () -> Unit,
+//        onDirectEnable: () -> Unit
     ) {
+
         viewModelScope.launch {
             val user = withContext(Dispatchers.IO) {
                 RoomRepo.getUserByEmail(userEmail.value)
@@ -223,13 +216,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             Log.d("BIOMETRIC", "encryptedPassword = ${user?.encryptedPassword}")
             Log.d("BIOMETRIC", "passwordIv = ${user?.passwordIv}")
             if (user?.encryptedPassword == null) {
-                // ← password not saved yet → ask for password
-                Log.d("BIOMETRIC", "→ show password dialog")
+
+                Log.d("BIOMETRIC", " show password dialog")
                 onNeedPassword()
             } else {
-                Log.d("BIOMETRIC", "→ direct enable")
+                Log.d("BIOMETRIC", "direct enable")
                 setBiometricEnabled(true)
-                onDirectEnable()
+//                onDirectEnable()
             }
         }
     }

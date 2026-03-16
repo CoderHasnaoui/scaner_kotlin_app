@@ -9,6 +9,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -23,16 +24,14 @@ import com.google.mlkit.vision.barcode.common.Barcode
 @Composable
 fun ZxingQrScanner(
     isFlashOn: Boolean,
-    isPaused: Boolean, // This is what changes when Dialogue or Loading happens
+    isPaused: Boolean,
     onResult: (String) -> Unit,
     onLongPress: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // --- THE FIX ---
-    // This creates a "live" reference that the analyzer can read
-    // even though the analyzer was created inside a LaunchedEffect(Unit)
+
     val pausedState by rememberUpdatedState(isPaused)
 
     val previewView = remember { PreviewView(context) }
@@ -43,7 +42,7 @@ fun ZxingQrScanner(
         cameraController.enableTorch(isFlashOn)
     }
 
-    // Setup Camera and Analyzer (Runs ONLY ONCE)
+
     LaunchedEffect(Unit) {
         cameraController.imageAnalysisTargetSize = CameraController.OutputSize(
             android.util.Size(1280, 720)
@@ -62,9 +61,7 @@ fun ZxingQrScanner(
                 CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
                 ContextCompat.getMainExecutor(context)
             ) { result ->
-                // --- THE CRITICAL CHECK ---
-                // We check the "live" pausedState here.
-                // If it's true, we stop right here and ignore the scan.
+
                 if (!pausedState) {
                     val barcodeResults = result.getValue(barcodeScanner)
                     if (!barcodeResults.isNullOrEmpty()) {
@@ -82,15 +79,23 @@ fun ZxingQrScanner(
         cameraController.bindToLifecycle(lifecycleOwner)
         previewView.controller = cameraController
     }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Camera
+        AndroidView(
+            factory = { previewView },
+            update = { },
+            modifier = Modifier.fillMaxSize()
+        )
 
-    AndroidView(
-        factory = { previewView },
-        update = { view ->
-            view.setOnLongClickListener {
-                onLongPress()
-                true
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = { onLongPress() }
+                    )
+                }
+        )
+    }
 }

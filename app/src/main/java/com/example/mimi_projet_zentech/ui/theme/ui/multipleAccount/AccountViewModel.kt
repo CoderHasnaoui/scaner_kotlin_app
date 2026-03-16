@@ -22,6 +22,7 @@ import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
+import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,79 +101,27 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun launchBiometric(
         activity: FragmentActivity,
         user: UserAccount,
-        onSuccess: (Cipher) -> Unit,
         onFallback: () -> Unit
     ) {
-        val ivString = user.passwordIv ?: run { onFallback(); return }
-        val cipher = tokenManager.getDecryptCipher(ivString)  // ← IV from Room
-        _biometricState.value = BiometricState.Authenticating
-
-        val prompt = BiometricPrompt(
-            activity,
-            object : BiometricPrompt.AuthenticationCallback() {
-
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-                    _biometricState.value = BiometricState.Success
-                    val authenticatedCipher = result.cryptoObject?.cipher!!
-                    onSuccess(authenticatedCipher)  // ← pass cipher back
-                }
-
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-                    _biometricState.value = BiometricState.Idle
-                    when (errorCode) {
-                        BiometricPrompt.ERROR_USER_CANCELED,
-                        BiometricPrompt.ERROR_CANCELED -> {
-                            // tapped outside → do nothing → stay on screen
-                        }
-                        BiometricPrompt.ERROR_NEGATIVE_BUTTON -> {
-                            // clicked "Use password instead"
-                            onFallback()
-                        }
-                        BiometricPrompt.ERROR_LOCKOUT,
-                        BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> {
-                            // too many attempts
-                            onFallback()
-                        }
-                        else -> {
-                            onFallback()
-                        }
+        BiometricHelper(activity, tokenManager).launchDecrypt(
+            user = user,
+            onSuccess = { password ->
+                loginWithBiometric(user.email, password)
+            },
+            onFallback = {
+                // handle KeyPermanentlyInvalidatedException
+                if (user.passwordIv != null) {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        roomRepo.updateEncryptedPassword(user.email, null, null)// celaer old data
+                        userRepository.setBiometricEnabled(false)
                     }
-
                 }
-
-                override fun onAuthenticationFailed() {
-                    // wrong finger → Android handles retry automatically
-                    // no need to do anything here
-                    _biometricState.value = BiometricState.Idle
-                }
+                onFallback() // need to go pas screen
             }
-        )
-
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Login as ${user.name}")
-            .setSubtitle("Use your fingerprint to continue")
-            .setNegativeButtonText("Use password instead")
-            .setConfirmationRequired(false)  // ← add this
-
-            .build()
-
-        prompt.authenticate(
-            BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Login as ${user.name}")
-                .setSubtitle("Use your fingerprint to continue")
-                .setNegativeButtonText("Use password instead")
-                .setConfirmationRequired(true)
-                .build(),
-            BiometricPrompt.CryptoObject(cipher)  // ← required!
         )
     }
 
-    // ── Remove User ────────────────────────────────────────
+
     fun loginWithBiometric(email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -200,6 +149,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+    // Remove Usser
     fun removeUser(user: UserAccount) {
         viewModelScope.launch(Dispatchers.IO) {
             roomRepo.deleteUser(user.email)
@@ -207,7 +157,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     }
 }
 
-// ── States ─────────────────────────────────────────────────
+// States
 
 sealed class BiometricState {
     object Idle : BiometricState()
@@ -220,20 +170,6 @@ sealed class BiometricCheckResult {
     object NotEnrolled : BiometricCheckResult()    // supported but no finger added
     object NotSupported : BiometricCheckResult()   // no hardware
 }
-
-
-//    private fun fetchUsers() {
-//        viewModelScope.launch {
-//            userRepository.allUsers
-//                .flowOn(Dispatchers.IO)
-//                .catch { e ->
-//                    // handle exception
-//                }
-//                .collect {  user ->
-//                _users.value =user
-//                }
-//        }
-//    }
 
 
 

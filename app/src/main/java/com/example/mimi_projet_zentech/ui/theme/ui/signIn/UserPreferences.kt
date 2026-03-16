@@ -32,8 +32,6 @@ class UserRepository(private val dataStore: DataStore<Preferences>) {
             preferences[UserKeys.EMAIL] = email
         }
     }
-
-
     val BIOMETRIC_ASKED = booleanPreferencesKey("biometric_asked")
     suspend fun setBiometricEnabled(enabled: Boolean) {
         dataStore.edit { it[BIOMETRIC_ENABLED] = enabled }
@@ -42,11 +40,11 @@ class UserRepository(private val dataStore: DataStore<Preferences>) {
     fun isBiometricEnabled(): Flow<Boolean> {
         return dataStore.data.map { it[BIOMETRIC_ENABLED] ?: false }
     }
-    suspend fun setBiometricAsked(asked: Boolean) {                  // ← add this
+    suspend fun setBiometricAsked(asked: Boolean) {
         dataStore.edit { it[BIOMETRIC_ASKED] = asked }
     }
 
-    fun isBiometricAsked(): Flow<Boolean> {                          // ← add this
+    fun isBiometricAsked(): Flow<Boolean> {
         return dataStore.data.map { it[BIOMETRIC_ASKED] ?: false }
     }
 }
