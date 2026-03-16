@@ -26,7 +26,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = DatabaseProvider.getDatabase(application)
     private val tokenManager = TokenManager(application)
-    private val slugManager = SlugManager(application)
+    val slugManager = SlugManager(application)
 
     // 1.sealedState
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -44,7 +44,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
     private val repo by lazy { MerchantRepository(merchantApi , db.merchantDao()) }
 
-    // ui Exp States
+
     val expandedCardIds = mutableStateMapOf<String, Boolean>()
     val expandedLocationIds = mutableStateMapOf<String, Boolean>()
 
@@ -87,13 +87,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun checkInitialState(forceSelect: Boolean, onRedirect: (String) -> Unit) {
         val savedSlug = slugManager.getSlug()
 
-        // 1. Immediate redirect if a selection already exists
         if (!forceSelect && !savedSlug.isNullOrEmpty()) {
             onRedirect(savedSlug)
             return
         }
 
-        // 2. Start checking Room and Network
         viewModelScope.launch {
             // Use Dispatchers.IO for the database query
             val localMerchants = withContext(Dispatchers.IO) {
@@ -137,28 +135,31 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 try {
                     repo.getCurrentMerchantsOnce()
                 } catch (e: Exception) {
-                    emptyList() // If Room fails, return empty instead of crashing
+                    emptyList()
                 }
             }
 
-            // 2. NETWORK SYNC (Trapped in a try/catch)
+
             try {
                 withContext(Dispatchers.IO) {
                     repo.refrechMerchant()
                 }
             } catch (e: Exception) {
-                // Log it, but don't crash
+
                 println("Network sync failed: ${e.message}")
             }
 
-            // 3. UI UPDATE
+
             withContext(Dispatchers.Main) {
                 val finalData = withContext(Dispatchers.IO) { repo.getCurrentMerchantsOnce() }
                 if (finalData.isNotEmpty()) {
                     if (finalData.size == 1 && !forceSelect) {
-                        onRedirect(finalData[0].merchantGroup.slug)
+                        val slug = finalData[0].merchantGroup.slug
+
+                        slugManager.saveSlug(slug)
+                        onRedirect(slug)
+
                     }
-                    // Your Flow in observeRoomData will handle the Success state
                 } else {
                     _uiState.value = HomeUiState.Error("No data. Check internet.")
                 }
@@ -206,6 +207,5 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-    // This stays accurate because it looks at the full cached list
     val showSearchField: Boolean get() = allMerchants.size > 3 || _searchText.value.isNotEmpty()
 }

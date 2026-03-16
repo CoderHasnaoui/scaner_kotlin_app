@@ -61,8 +61,9 @@ fun HomeScreen(
 
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
+        val hasSlug = viewModel.slugManager.getSlug() != null
         if (previousRoute == Screen.Login.route || previousRoute == null  ||
-            previousRoute == Screen.passwordConfirm.route) {
+            previousRoute == Screen.passwordConfirm.route || !hasSlug) {
             (navController.context as? Activity)?.finish()
         } else {
             navController.popBackStack()

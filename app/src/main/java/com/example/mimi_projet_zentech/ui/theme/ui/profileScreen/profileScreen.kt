@@ -71,7 +71,7 @@ fun profileScreen(
     val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
     // Trigger API load once
     LaunchedEffect(Unit) {
-        viewModel.loadProfileData()
+        viewModel.retry()  // always fresh when screen opens ✅
     }
     if (!viewModel.isReady) {
         Box(
@@ -152,7 +152,7 @@ fun profileScreen(
                             else if ((viewModel.errorMessage != null)){
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                     Text(viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
-                                    TextButton(onClick = { viewModel.loadProfileData() }) {
+                                    TextButton(onClick = { viewModel.retry() }) {
                                         Text("Retry", fontWeight = FontWeight.Bold)
                                     }
                                 }

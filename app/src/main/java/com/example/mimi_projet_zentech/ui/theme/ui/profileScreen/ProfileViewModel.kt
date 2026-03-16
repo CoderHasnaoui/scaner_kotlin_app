@@ -55,16 +55,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             initialValue = false
         )
     private val repoSign = AuthRepository(RetrofitInstance.publicApi)
-    var isReady by mutableStateOf(false)
-        private set
-    var errorMessage by mutableStateOf<String?>(null)
-        private set
-    // UI States
-    var selectedMerchant by mutableStateOf<MerchantGroup?>(null)
-        private set
     var isLoading by mutableStateOf(false)
-        private set
-
+    var errorMessage by mutableStateOf<String?>(null)
+    var selectedMerchant by mutableStateOf<MerchantGroup?>(null)
+    var isReady by mutableStateOf(false)
 // i use it for my check if taht user have password endcrypted in Room
     val currentUser: StateFlow<UserAccount?> = userRepository.email
         .flatMapLatest { email ->
@@ -108,40 +102,40 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 //    }
 
     fun loadProfileData() {
-        // don't get data again if it was
-        if (selectedMerchant != null )return
-
+        if (selectedMerchant != null) return
 
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
+            isReady = false
             try {
-
-
                 val slug = slugManager.getSlug()
                 if (slug != null) {
-
-                    val result: MerchantGroup? = repository.getMerchantBySlug(slug)
-
+                    val result = repository.getMerchantBySlug(slug)
                     if (result != null) {
                         selectedMerchant = result
                     } else {
                         errorMessage = "Merchant not found."
                     }
-
-                }else{
-                    errorMessage = "No Business Groupe Selected "
+                } else {
+                    errorMessage = "No Business Group Selected"
                 }
-
             } catch (e: Exception) {
-                errorMessage = "Failed to load profile. Please check your connection."
-                e.printStackTrace()
+                errorMessage = "Failed to load profile."
             } finally {
                 isLoading = false
                 isReady = true
-
             }
         }
+    }
+
+    // Add this new function for retry
+    fun retry() {
+        selectedMerchant = null
+        errorMessage = null
+        isReady = false
+        Log.d("SLUG_DEBUG", "slug = ${slugManager.getSlug()}")
+        loadProfileData()
     }
     fun setBiometricEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -149,6 +143,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
     @RequiresApi(Build.VERSION_CODES.R)
+    // verify pass  get Cipher
+
     fun verifyPasswordAndGetCipher(
         password: String,
         email: String,
@@ -185,6 +181,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+    //saveEncrypt
     fun saveEncryptedPassword(
         encryptedPassword: String,
         iv: String,
@@ -203,6 +200,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    //Biometric Sys
     fun onBiometricSwitchEnabled(
         onNeedPassword: () -> Unit,
 //        onDirectEnable: () -> Unit
