@@ -31,7 +31,6 @@ fun ZxingQrScanner(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-
     val pausedState by rememberUpdatedState(isPaused)
 
     val previewView = remember { PreviewView(context) }
@@ -41,7 +40,6 @@ fun ZxingQrScanner(
     LaunchedEffect(isFlashOn) {
         cameraController.enableTorch(isFlashOn)
     }
-
 
     LaunchedEffect(Unit) {
         cameraController.imageAnalysisTargetSize = CameraController.OutputSize(
@@ -86,7 +84,6 @@ fun ZxingQrScanner(
             update = { },
             modifier = Modifier.fillMaxSize()
         )
-
 
         Box(
             modifier = Modifier

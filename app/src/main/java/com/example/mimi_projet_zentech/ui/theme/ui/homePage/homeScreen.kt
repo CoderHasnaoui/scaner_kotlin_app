@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.mimi_projet_zentech.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 
@@ -121,6 +123,7 @@ fun HomeScreen(
 
         // --- CONTENT AREA ---
         Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
+
             when (val state = uiState) {
                 is HomeUiState.Loading -> LoadingView()
 
@@ -148,21 +151,56 @@ fun HomeScreen(
                 }
 
                 is HomeUiState.Success -> {
+                    val merchants = viewModel.merchantsPaged.collectAsLazyPagingItems()
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(state.merchants) { merchant ->
-                            MyBuisneCard(
-                                slug = merchant.slug,
-                                name = merchant.name,
-                                offices = merchant.locations,
 
-                                totalBusinessCount = state.merchants.size,
-                                navController = navController,
-                                viewModel = viewModel
-                            )
+                        // this si the old VERsion
+//                        items(state.merchants) { merchant ->
+//                            MyBuisneCard(
+//                                slug = merchant.slug,
+//                                name = merchant.name,
+//                                offices = merchant.locations,
+//
+//                                totalBusinessCount = state.merchants.size,
+//                                navController = navController,
+//                                viewModel = viewModel
+//                            )
+//                        }
+
+                        //   dconvert to Paging Version
+                        items(count = merchants.itemCount) { index ->
+                            val merchant = merchants[index]
+                            if (merchant != null) {
+                                MyBuisneCard(
+                                    slug = merchant.merchantGroup.slug,
+                                    name = merchant.merchantGroup.name,
+                                    offices = merchant.location.map { Location(it.name) },
+                                    totalBusinessCount = merchants.itemCount,
+                                    navController = navController,
+                                    viewModel = viewModel
+                                )
+                            }
+                        }
+
+                     // loading state In bttom
+                        item {
+                            when (merchants.loadState.append) {
+                                is LoadState.Loading -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                                else -> {}
+                            }
                         }
                     }
                 }
@@ -305,5 +343,4 @@ fun MyBuisneCard(
         }
     }
 }
-
 

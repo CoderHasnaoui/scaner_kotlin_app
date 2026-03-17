@@ -2,6 +2,8 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.example.mimi_projet_zentech.data.local.SessionManager
 import com.example.mimi_projet_zentech.data.local.SlugManager
 import com.example.mimi_projet_zentech.data.local.TokenManager
@@ -14,6 +16,7 @@ import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.MerchantRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeUiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,6 +46,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
     }
     private val repo by lazy { MerchantRepository(merchantApi , db.merchantDao()) }
+    val merchantsPaged : Flow<PagingData<GroupeWithLocation>> = repo
+        .getMetchantsPages()
+        .cachedIn(viewModelScope)
 
 
     val expandedCardIds = mutableStateMapOf<String, Boolean>()

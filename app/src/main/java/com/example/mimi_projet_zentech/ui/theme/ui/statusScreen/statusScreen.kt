@@ -108,6 +108,7 @@ fun ValidScreen(
             }
 
             Box(
+
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
@@ -134,7 +135,6 @@ fun ValidScreen(
                     TicketRow("Price:", if(ticket?.amount==0.0) "Free Ticket"  else "$${ticket?.amount ?: "0.00"}"  , isThelast = true)
                 }
             }
-
             Spacer(Modifier.weight(1f))
 
         } else {

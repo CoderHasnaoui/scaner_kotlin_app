@@ -96,6 +96,19 @@ android {
     }
 }
 dependencies {
+
+        // Paging 2
+        val paging_version = "2.1.2"
+
+        implementation("androidx.paging:paging-runtime:$paging_version") // For Kotlin use paging-runtime-ktx
+
+        // alternatively - without Android dependencies for testing
+        testImplementation("androidx.paging:paging-common:$paging_version") // For Kotlin use paging-common-ktx
+// build.gradle
+    implementation("androidx.paging:paging-compose:3.3.0")
+        // optional - RxJava support
+        implementation("androidx.paging:paging-rxjava2:$paging_version") // For Kotlin use paging-rxjava2-ktx
+        implementation("androidx.room:room-paging:2.6.1")
     // biometric
     implementation("androidx.biometric:biometric:1.1.0")
 

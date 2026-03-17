@@ -1,5 +1,6 @@
 package com.example.mimi_projet_zentech.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -25,6 +26,9 @@ interface MerchantDao {
     @Transaction
     @Query("SELECT * FROM Merchant")
     suspend fun getStaticMerchantGroups(): List<GroupeWithLocation>
+    @Transaction
+    @Query("SELECT * FROM MERCHANT")
+    fun getMerchantPaged(): PagingSource<Int , GroupeWithLocation>
 }
 
 

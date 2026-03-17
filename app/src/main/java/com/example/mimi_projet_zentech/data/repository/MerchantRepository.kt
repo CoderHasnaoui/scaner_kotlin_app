@@ -1,6 +1,9 @@
 package com.example.mimi_projet_zentech.data.repository
 
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.example.mimi_projet_zentech.data.local.dao.MerchantDao
 import com.example.mimi_projet_zentech.data.local.entity.merchantEntity.LocationEntity
 import com.example.mimi_projet_zentech.data.local.entity.merchantEntity.MerchantEntity
@@ -10,6 +13,7 @@ import com.example.mimi_projet_zentech.data.model.GroupeMerchant.MerchantGroup
 import com.example.mimi_projet_zentech.data.remote.AuthApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
+import java.net.UnknownHostException
 
 
 class MerchantRepository(private val api: AuthApi , private val dao: MerchantDao) {
@@ -45,7 +49,7 @@ class MerchantRepository(private val api: AuthApi , private val dao: MerchantDao
             }
             saveToDb(merchants = Mentities  , locations = locatioonEntity)
         }
-        } catch (e: java.net.UnknownHostException) {
+        } catch (e: UnknownHostException) {
 
             println("keep old data cannot reach to network.")
         } catch (e: Exception) {
@@ -67,6 +71,21 @@ class MerchantRepository(private val api: AuthApi , private val dao: MerchantDao
     suspend fun getCurrentMerchantsOnce(): List<GroupeWithLocation> {
         return dao.getStaticMerchantGroups()
     }
+
+    // poaging
+    fun getMetchantsPages():Flow<PagingData<GroupeWithLocation>>{
+        return Pager(
+            config = PagingConfig(
+                pageSize = 10  ,
+                prefetchDistance =  5 ,
+                enablePlaceholders = false
+
+            ) ,
+            pagingSourceFactory = {dao.getMerchantPaged()}
+        ).flow
+    }
+
+
 
 // change from ! MerchantGroupe to MErchnatwithGroupes
 
