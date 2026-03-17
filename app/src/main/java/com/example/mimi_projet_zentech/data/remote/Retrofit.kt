@@ -51,7 +51,6 @@ object RetrofitInstance {
             .addConverterFactory(gsonConverter)
             .build()
             .create(AuthApi::class.java)
-
     }
 
     fun getPrivateApi(

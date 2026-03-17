@@ -69,10 +69,12 @@ import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.ValidScreen
 import com.example.mimi_projet_zentech.ui.theme.util.NAV_ARG_EMAIL
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.permission.CameraPermission
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
+@AndroidEntryPoint
 class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

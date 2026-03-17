@@ -47,6 +47,8 @@ import android.content.Intent
 import android.provider.Settings
 import android.util.Log
 import androidx.biometric.BiometricManager
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
@@ -113,7 +115,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
     }
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
 
@@ -204,7 +206,7 @@ fun multipleAccount(navController: NavController ,users :  List<UserAccount>) {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(MaterialTheme.colorScheme.background)
             .systemBarsPadding() // 🔹out of barr
             .padding(horizontal = 15.dp),
         horizontalAlignment = Alignment.CenterHorizontally

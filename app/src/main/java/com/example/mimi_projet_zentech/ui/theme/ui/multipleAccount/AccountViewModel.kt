@@ -1,29 +1,23 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.multipleAccount
 
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
 import com.example.mimi_projet_zentech.data.local.entity.userAccount.UserAccount
 import com.example.mimi_projet_zentech.data.repository.UserAccountRepository
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.UserRepository
-import com.example.mimi_projet_zentech.ui.theme.util.Screen
+import com.example.mimi_projet_zentech.data.local.UserRepository
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
+import com.example.mimi_projet_zentech.data.local.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,10 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import javax.crypto.Cipher
 
 class AccountViewModel(application: Application) : AndroidViewModel(application) {
     val tokenManager = TokenManager(application)

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -96,7 +97,12 @@ android {
     }
 }
 dependencies {
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
 
+    // Hilt with ViewModel
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
         // Paging 2
         val paging_version = "2.1.2"
 

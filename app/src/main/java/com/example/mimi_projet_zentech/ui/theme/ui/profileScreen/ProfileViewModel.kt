@@ -1,14 +1,12 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.profileScreen
 
 import android.app.Application
-import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.SessionManager
@@ -24,8 +22,8 @@ import com.example.mimi_projet_zentech.data.repository.MerchantRepository
 import com.example.mimi_projet_zentech.data.repository.UserAccountRepository
 import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.UserRepository
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
+import com.example.mimi_projet_zentech.data.local.UserRepository
+import com.example.mimi_projet_zentech.data.local.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

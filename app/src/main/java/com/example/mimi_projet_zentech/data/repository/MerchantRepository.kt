@@ -14,9 +14,13 @@ import com.example.mimi_projet_zentech.data.remote.AuthApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
 import java.net.UnknownHostException
+import javax.inject.Inject
+import javax.inject.Named
 
 
-class MerchantRepository(private val api: AuthApi , private val dao: MerchantDao) {
+class MerchantRepository @Inject constructor(
+    @Named("private")private val api: AuthApi ,
+    private val dao: MerchantDao) {
 
     // Read From Room
     val allMerchantFlow : Flow<List<GroupeWithLocation>> = dao.getMErchantGroupe()

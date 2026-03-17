@@ -80,15 +80,16 @@ fun dispalyUserName(name :String){
     Text(
         text = name,
         style = TextStyle(
-            fontFamily = FontFamily.SansSerif, // Uses the system font (like FB Lite)
-            // It is a very heavy bold in the image
-            fontSize = 24.sp,                  // Large and prominent
-            color = Color(0xFF050505),         // 🔹 Facebook's "Nearly Black"
-            letterSpacing = (1.5).sp,         // 🔹 THE TRICK: Negative spacing makes it look like FB
+            fontFamily = FontFamily.SansSerif,
+
+            fontSize = 24.sp,
+//            color = Color(0xFF050505),
+            color = (MaterialTheme.colorScheme.onBackground),
+            letterSpacing = (1.5).sp,
             lineHeight = 30.sp,
             textAlign = TextAlign.Center
         ) ,
-//            color = Color(0xFF1C1E21),            // This is the exact "FB Black" (not pure black)
+//            color = Color(0xFF1C1E21),
         modifier = Modifier.padding(top = 12.dp) // Gap between Circle and Text
     )
 }
@@ -153,7 +154,7 @@ fun createNew(){
         Text("Create a New Account" ,
             style = MaterialTheme.typography.labelLarge ,
             color =Color(0xFF0064e0), textAlign = TextAlign.Center ,
-            fontWeight = FontWeight.SemiBold, // 🔹 Not as bold as the login button
+            fontWeight = FontWeight.SemiBold, //
             fontSize = 16.sp
         )
     }

@@ -1,22 +1,13 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.splash
 
-import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
-import androidx.camera.core.impl.utils.ContextUtil.getApplication
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
-import com.example.mimi_projet_zentech.data.model.UserProfile.UserProfileResponse
-import com.example.mimi_projet_zentech.ui.theme.SignInStrings
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.UserRepository
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
+import com.example.mimi_projet_zentech.data.local.UserRepository
+import com.example.mimi_projet_zentech.data.local.dataStore
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class splashViewModel (application: Application): AndroidViewModel(application) {

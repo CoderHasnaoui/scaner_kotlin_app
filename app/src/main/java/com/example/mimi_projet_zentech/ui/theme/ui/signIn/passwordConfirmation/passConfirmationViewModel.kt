@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.net.NetworkCapabilities
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
@@ -13,10 +12,7 @@ import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
 import com.example.mimi_projet_zentech.data.repository.UserAccountRepository
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInData
 import com.example.mimi_projet_zentech.ui.theme.ui.signIn.SignInState
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.UserRepository
-import com.example.mimi_projet_zentech.ui.theme.ui.signIn.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

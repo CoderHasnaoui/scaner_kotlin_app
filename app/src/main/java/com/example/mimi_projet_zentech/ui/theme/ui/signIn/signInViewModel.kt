@@ -12,9 +12,7 @@ import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
 import com.example.mimi_projet_zentech.data.local.entity.userAccount.UserAccount
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
-import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
-import com.example.mimi_projet_zentech.data.repository.MerchantRepository
 import com.example.mimi_projet_zentech.data.repository.UserAccountRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,18 +22,24 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.biometric.BiometricPrompt
+import com.example.mimi_projet_zentech.data.local.UserRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
+import javax.inject.Inject
 
 
-class  SignInViewModel (application: Application): AndroidViewModel(application) {
+class  SignInViewModel @Inject constructor (
+    application: Application ,
+    private val authRepository: AuthRepository ,
+    private val roomRep: UserAccountRepository ,
+    private val tokenManager : TokenManager ,
+    private val userRepository: UserRepository
+): AndroidViewModel(application) {
     // db Local
     val  db = DatabaseProvider.getDatabase(application)
-    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
+//    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
     //Api Calles
-    private val tokenManager = TokenManager(getApplication())
-    private val repository = AuthRepository(RetrofitInstance.publicApi)
-    private val userRepository = UserRepository(getApplication<Application>().dataStore)
+//    private val tokenManager = TokenManager(getApplication())
+//    private val userRepository = UserRepository(getApplication<Application>().dataStore)
     var onLoginSuccess: (()->Unit)?  = null
     // SignState
     private val _state = MutableStateFlow<SignInState>(SignInState.Ready)
@@ -91,7 +95,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
                         platform = "android",
                         rememberMe = true
                     )
-                    val response = repository.login(request)
+                    val response = authRepository.login(request)
                     if (response.isSuccessful) {
                         val loginStartTime = System.currentTimeMillis()
                         val data = response.body()
@@ -105,12 +109,12 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
 
                             // save data in storeage
                             withContext(Dispatchers.IO){
-                                val user = RoomRepo.getUserByEmail(emailApi)
+                                val user = roomRep.getUserByEmail(emailApi)
                                 if(user==null){
-                                    RoomRepo.saveUser(UserAccount(email = emailApi ,  name  , initilas =name.take(1) ,  loginStartTime ))
+                                    roomRep.saveUser(UserAccount(email = emailApi ,  name  , initilas =name.take(1) ,  loginStartTime ))
 
                                 }else{
-                                    RoomRepo.updateLastSession(emailApi , loginStartTime)
+                                    roomRep.updateLastSession(emailApi , loginStartTime)
                                 }
                             }
                             // if the first Time Ask BiomeT
@@ -167,7 +171,7 @@ class  SignInViewModel (application: Application): AndroidViewModel(application)
             onSuccess = { encryptedPassword, iv ->
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
-                        RoomRepo.updateEncryptedPassword(
+                        roomRep.updateEncryptedPassword(
                             email = _fields.value.email,
                             encryptedPassword = encryptedPassword,
                             passwordIv = iv
