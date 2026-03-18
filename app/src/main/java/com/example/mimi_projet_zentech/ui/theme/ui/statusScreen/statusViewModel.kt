@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.SessionManager
 import com.example.mimi_projet_zentech.data.local.TokenManager
@@ -15,22 +16,31 @@ import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
 import com.example.mimi_projet_zentech.ui.theme.ui.scanScreen.ScanUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.getValue
 
-class ValidViewModel (application: Application): AndroidViewModel(application) {
-    val   themeRepo = ThemeRepository(application)
+@HiltViewModel
+class ValidViewModel @Inject constructor  (
+      val themeRepo: ThemeRepository ,
+    private  val ticketRepository: TicketRepository  ,
+
+
+): ViewModel() {
+//    val   themeRepo = ThemeRepository(application)
     var isDark =  themeRepo.isDarkMode()
         private set
-    private val tokenManager = TokenManager(application)
-    private val api by lazy {
-        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
-    }
-    private val ticketRepository by lazy { TicketRepository(api) }
+//    private val tokenManager = TokenManager(application)
+//    private val api by lazy {
+//        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
+//    }
+//    private val ticketRepository by lazy { TicketRepository(api) }
 
     // Use a StateFlow for the UI
     private val _stateUi = MutableStateFlow<ValidUiState>(ValidUiState.Loading)

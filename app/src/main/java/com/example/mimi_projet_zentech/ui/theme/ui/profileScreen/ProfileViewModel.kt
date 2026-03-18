@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.SessionManager
 import com.example.mimi_projet_zentech.data.local.SlugManager
@@ -24,6 +25,7 @@ import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 
 import com.example.mimi_projet_zentech.data.local.UserRepository
 import com.example.mimi_projet_zentech.data.local.dataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,19 +34,30 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.crypto.Cipher
+import javax.inject.Inject
+@HiltViewModel
+class ProfileViewModel @Inject constructor(
+   val tokenManager: TokenManager ,
+   private val slugManager: SlugManager ,
+   private val repository: MerchantRepository ,
+    private val RoomRepo : UserAccountRepository ,
+   private  val userRepository: UserRepository,
+   private val repoSign : AuthRepository ,
+    val themeRepository: ThemeRepository ,
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-    val tokenManager = TokenManager(application)
-    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
 
-    val db = DatabaseProvider.getDatabase(application)
+) : ViewModel() {
+//    val tokenManager = TokenManager(application)
+//    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
+
+//    val db = DatabaseProvider.getDatabase(application)
     val api = RetrofitInstance.getPrivateApi(tokenManager , onTokenExpired = { SessionManager.notifyTokenExpired()})
 
-    val repository = MerchantRepository(api ,db.merchantDao() )
-    val themeRepo = ThemeRepository(context = application)
+//    val repository = MerchantRepository(api ,db.merchantDao() )
+//    val themeRepo = ThemeRepository()
 
-    val slugManager = SlugManager(context = application)
-    private val userRepository = UserRepository(getApplication<Application>().dataStore)
+//    val slugManager = SlugManager(context = application)
+//    private val userRepository = UserRepository(getApplication<Application>().dataStore)
     val isBiometricEnabled: StateFlow<Boolean> = userRepository
         .isBiometricEnabled()
         .stateIn(
@@ -52,7 +65,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
         )
-    private val repoSign = AuthRepository(RetrofitInstance.publicApi)
+//    private val repoSign = AuthRepository(RetrofitInstance.publicApi)
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
     var selectedMerchant by mutableStateOf<MerchantGroup?>(null)
@@ -134,6 +147,19 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         isReady = false
         Log.d("SLUG_DEBUG", "slug = ${slugManager.getSlug()}")
         loadProfileData()
+    }
+    // clearSelectedSlug
+    fun clearSelectedSlug (){
+        slugManager.clearSelectedSlug()
+    }
+    // logot
+    fun logout() {
+        tokenManager.clearToken()
+        tokenManager.logOut()
+        slugManager.clearSelectedSlug()
+    }
+    fun setDarkMode(enabled: Boolean) {
+        themeRepository.setDarkMode(enabled)
     }
     fun setBiometricEnabled(enabled: Boolean) {
         viewModelScope.launch {

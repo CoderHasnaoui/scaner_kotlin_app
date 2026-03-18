@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.fragment.app.FragmentActivity
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -62,7 +63,7 @@ import javax.crypto.Cipher
 fun profileScreen(
     navController: NavController,
     isDarkModeState: MutableState<Boolean>, // This controls the app theme
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
 
@@ -71,7 +72,7 @@ fun profileScreen(
     val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
     // Trigger API load once
     LaunchedEffect(Unit) {
-        viewModel.retry()  // always fresh when screen opens ✅
+        viewModel.retry()
     }
     if (!viewModel.isReady) {
         Box(
@@ -170,7 +171,9 @@ fun profileScreen(
 
                         Button(
 
-                            onClick = { viewModel.slugManager.clearSelectedSlug()
+                            onClick = {
+//                                viewModel.slugManager.clearSelectedSlug()
+                                viewModel.clearSelectedSlug()
                                 navController.navigate(Screen.Home.getRoute(forceSelect = true)) {
                                     popUpTo(Screen.Home.route) { inclusive = true }
                                 } },
@@ -211,7 +214,8 @@ fun profileScreen(
                     onCheckedChange = { newValue ->
                         isDarkModeState.value = newValue // Updates the global theme
 //                        sharedPref.edit().putBoolean("is_dark_mode", newValue).apply() // Persists it
-                        viewModel.themeRepo.setDarkMode(newValue)
+//                        viewModel.themeRepo.setDarkMode(newValue)
+                        viewModel.setDarkMode(newValue)
                     }
                 )
             }
@@ -221,6 +225,7 @@ fun profileScreen(
             BiometricSwitchSection(
                 viewModel = viewModel,
                 email = userEmail
+
             )
 
 
@@ -229,9 +234,8 @@ fun profileScreen(
             // --- 4. Log Out ---
             Button(
                 onClick = {
-                    viewModel.tokenManager.clearToken()
-                    viewModel.tokenManager.logOut()
-                    viewModel.slugManager.clearSelectedSlug()
+
+                    viewModel.logout()
                     navController.navigate(Screen.Account.route) { popUpTo(0) { inclusive = true } }
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -249,7 +253,7 @@ fun profileScreen(
 @RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun BiometricSwitchSection(
-    viewModel: ProfileViewModel,
+    viewModel: ProfileViewModel = hiltViewModel(),
     email: String
 ) {
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()

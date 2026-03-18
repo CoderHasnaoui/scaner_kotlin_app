@@ -6,6 +6,7 @@ import com.example.mimi_projet_zentech.data.local.SlugManager
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.local.UserRepository
 import com.example.mimi_projet_zentech.data.local.dataStore
+import com.example.mimi_projet_zentech.ui.theme.ThemeRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,11 +21,13 @@ object ManagerModule{
     fun provideTokenManage(app: Application): TokenManager{
         return TokenManager(app)
     }
+
     @Provides
     @Singleton
     fun provideSlugManagerrr(app: Application): SlugManager{
         return SlugManager(app)
     }
+
     @Provides
     @Singleton
     fun provideDataStorer(app : Application) : DataStore<Preferences>{
@@ -35,6 +38,11 @@ object ManagerModule{
     fun provideUserRepository(dataStore: DataStore<Preferences>): UserRepository{
         return UserRepository(dataStore)
 
+    }
+    @Provides
+    @Singleton
+    fun provideThemeRepository(app: Application): ThemeRepository {
+        return ThemeRepository(app)
     }
 
 }

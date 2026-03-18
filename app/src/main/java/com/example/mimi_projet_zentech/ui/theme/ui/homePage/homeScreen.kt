@@ -1,6 +1,6 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 
-import HomeViewModel
+
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -39,12 +40,13 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.mimi_projet_zentech.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     forceSelect: Boolean = false,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.searchText.collectAsStateWithLifecycle()

@@ -1,20 +1,18 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.splash
-
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
-import com.example.mimi_projet_zentech.data.local.UserRepository
-import com.example.mimi_projet_zentech.data.local.dataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
-class splashViewModel (application: Application): AndroidViewModel(application) {
+@HiltViewModel
+class splashViewModel @Inject constructor(private val tokenManager: TokenManager): ViewModel() {
     private val _userState  = MutableStateFlow<UserState>(UserState.Loading)
     val userState : StateFlow<UserState> = _userState
-    private val userRepository = UserRepository(getApplication<Application>().dataStore)
-     val tokenManager  = TokenManager(getApplication())
+//    private val userRepository = UserRepository(getApplication<Application>().dataStore)
+//     val tokenManager  = TokenManager(getApplication())
 //    val userName: StateFlow<String> = userRepository.name
 //        .stateIn(
 //            scope = viewModelScope,

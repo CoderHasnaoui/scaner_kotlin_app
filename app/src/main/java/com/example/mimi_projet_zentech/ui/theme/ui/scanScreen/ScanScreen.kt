@@ -34,12 +34,13 @@ import com.yourapp.qrscanner.ui.components.ZxingQrScanner
 import kotlinx.coroutines.launch
 import java.lang.Exception
 
+
 @Composable
-fun ScannerScreen(navController: NavController , viewModel: ScanViewMode = viewModel()) {
+fun ScannerScreen(navController: NavController , viewModel: ScanViewMode ) {
     // --- States ---
     val state  by viewModel.uiState.collectAsStateWithLifecycle()
     var showManualDialog by remember { mutableStateOf(false) }
-    var isFlashOn by remember { mutableStateOf(false) } // 🔹 Flash state
+    var isFlashOn by remember { mutableStateOf(false) } //
 
 
     // --- 1. INFINITE ANIMATION LOGIC ---

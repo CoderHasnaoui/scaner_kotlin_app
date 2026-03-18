@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -57,7 +58,7 @@ import com.example.mimi_projet_zentech.ui.theme.util.Screen
 @Composable
 fun ManageAccountsScreen(
     navController: NavController,
-    viewModel: AccountViewModel = viewModel()
+    viewModel: AccountViewModel = hiltViewModel()
 ) {
     val accountState by viewModel.accountState.collectAsStateWithLifecycle()
 

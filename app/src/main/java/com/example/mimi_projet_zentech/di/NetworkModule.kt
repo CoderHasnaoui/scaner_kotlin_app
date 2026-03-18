@@ -22,6 +22,8 @@ object NetworkModule {
         fun povideGsonConverterFactory(): GsonConverterFactory{
             return GsonConverterFactory.create()
         }
+    @Provides
+    @Singleton
     @Named("private")
     fun providePrivateApi(
         gsonConverter: GsonConverterFactory ,
@@ -60,6 +62,7 @@ object NetworkModule {
             .create(AuthApi::class.java)
     }
     @Provides
+    @Singleton
     @Named("public")
     fun povidePublicApi(
         gsonConverter: GsonConverterFactory ): AuthApi

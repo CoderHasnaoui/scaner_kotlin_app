@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,7 +37,7 @@ import com.yourapp.qrscanner.permission.CameraPermission
 @Composable
 fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val context = LocalContext.current
-    val sharedViewModel : ScanViewMode = viewModel ()
+    val sharedViewModel : ScanViewMode = hiltViewModel ()
     val navController = rememberNavController()
 //    val tokenManager = remember { TokenManager(context) }
 //    val isLoggedIn = remember { tokenManager.isLoggedIn() }

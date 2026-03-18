@@ -21,26 +21,34 @@ import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.LocationRepository
 import com.example.mimi_projet_zentech.data.repository.TicketRepository
 import com.example.mimi_projet_zentech.ui.theme.data.model.Enum.ScanStatus
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltViewModel
+class ScanViewMode @Inject constructor(
+    private val tokenManager: TokenManager  ,
+    private val slugManager: SlugManager ,
+    private val ticketRepository: TicketRepository ,
+    private val locationRepository: LocationRepository
+): ViewModel() {
 
-class ScanViewMode(application: Application): AndroidViewModel(application) {
-    private val tokenManager = TokenManager(getApplication())
-    private val slugManager = SlugManager(getApplication())
-    private val api by lazy {  RetrofitInstance.getPrivateApi(
-        tokenManager ,
-        onTokenExpired = { SessionManager.notifyTokenExpired()}
-    ) }
+//    private val tokenManager = TokenManager(getApplication())
+//    private val slugManager = SlugManager(getApplication())
+//    private val api by lazy {  RetrofitInstance.getPrivateApi(
+//        tokenManager ,
+//        onTokenExpired = { SessionManager.notifyTokenExpired()}
+//    ) }
 
     private var _uiState = MutableStateFlow<ScanUiState>(ScanUiState.Initializing)
     var uiState : StateFlow<ScanUiState> = _uiState.asStateFlow()
-    private  val ticketRepository  by lazy { TicketRepository(api) }
-    private val locationRepository  by lazy { LocationRepository(api) }
+//    private  val ticketRepository  by lazy { TicketRepository(api) }
+//    private val locationRepository  by lazy { LocationRepository(api) }
 
     var onNavigate : ((ticketNum :String  , scanStatus: ScanStatus)->Unit ) ? = null
 

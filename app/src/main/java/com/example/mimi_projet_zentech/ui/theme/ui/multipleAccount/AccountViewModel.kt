@@ -12,12 +12,14 @@ import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.model.Login.LoginRequest
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.AuthRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
 import com.example.mimi_projet_zentech.data.local.dataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,12 +27,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Named
 
-class AccountViewModel(application: Application) : AndroidViewModel(application) {
-    val tokenManager = TokenManager(application)
-    private val db = DatabaseProvider.getDatabase(application)
-    private val roomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
-    private val userRepository = UserRepository(getApplication<Application>().dataStore)
+@HiltViewModel
+class AccountViewModel @Inject  constructor(
+
+     private val  tokenManager: TokenManager ,
+     private val  roomRepo : UserAccountRepository ,
+     private val   userRepository: UserRepository ,
+     private  val repository : AuthRepository
+
+) : ViewModel() {
+//    val tokenManager = TokenManager(application)
+//    private val db = DatabaseProvider.getDatabase(application)
+//    private val roomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
+//    private val userRepository = UserRepository(getApplication<Application>().dataStore)
 
     // Account State
     private val _loginError = MutableStateFlow(false)
@@ -42,7 +54,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     // Biometric State
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
     val biometricState: StateFlow<BiometricState> = _biometricState.asStateFlow()
-    private val repository = AuthRepository(RetrofitInstance.publicApi)  // ← add
+//    private val repository = AuthRepository(RetrofitInstance.publicApi)
     var onLoginSuccess: (() -> Unit)? = null
     // Biometric enabled flag
     val isBiometricEnabled: StateFlow<Boolean> = userRepository

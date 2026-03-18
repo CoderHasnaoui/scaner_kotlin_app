@@ -1,7 +1,7 @@
 package com.example.mimi_projet_zentech.ui.theme.ui.multipleAccount
 
 
-import HomeViewModel
+
 import android.annotation.SuppressLint
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
@@ -51,13 +51,14 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable
-fun AccountScreen(navController: NavController ,    viewModel: AccountViewModel = viewModel()) {
+fun AccountScreen(navController: NavController ,    viewModel: AccountViewModel = hiltViewModel()) {
 
     val accountState by viewModel. accountState.collectAsStateWithLifecycle()
     when(accountState){
@@ -92,7 +93,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 
 
 
-   val  viewModel: AccountViewModel = viewModel()
+   val  viewModel: AccountViewModel = hiltViewModel()
     val context = LocalContext.current
     val activity = context as FragmentActivity
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
@@ -146,8 +147,6 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
         Spacer(modifier = Modifier.height(38.dp))
         // log with this Account
         loginButton(
-
-
                 to_login = {
 
                     if (isBiometricEnabled) {

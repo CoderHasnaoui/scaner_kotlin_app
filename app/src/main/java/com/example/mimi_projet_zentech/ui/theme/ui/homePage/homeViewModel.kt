@@ -1,6 +1,7 @@
-import android.app.Application
+package com.example.mimi_projet_zentech.ui.theme.ui.homePage
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -15,6 +16,7 @@ import com.example.mimi_projet_zentech.data.model.GroupeMerchant.MerchantGroup
 import com.example.mimi_projet_zentech.data.remote.RetrofitInstance
 import com.example.mimi_projet_zentech.data.repository.MerchantRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.homePage.HomeUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +26,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val repo: MerchantRepository ,
+    val slugManager: SlugManager ,
 
-    private val db = DatabaseProvider.getDatabase(application)
-    private val tokenManager = TokenManager(application)
-    val slugManager = SlugManager(application)
+) : ViewModel() {
+
+//    private val db = DatabaseProvider.getDatabase(application)
+//    private val tokenManager = TokenManager(application)
+//    val slugManager = SlugManager(application)
 
     // 1.sealedState
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -42,10 +50,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private var allMerchants = emptyList<MerchantGroup>()
 
-    private val merchantApi by lazy {
-        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
-    }
-    private val repo by lazy { MerchantRepository(merchantApi , db.merchantDao()) }
+//    private val merchantApi by lazy {
+//        RetrofitInstance.getPrivateApi(tokenManager) { SessionManager.notifyTokenExpired() }
+//    }
+//    private val repo by lazy { MerchantRepository(merchantApi , db.merchantDao()) }
     val merchantsPaged : Flow<PagingData<GroupeWithLocation>> = repo
         .getMetchantsPages()
         .cachedIn(viewModelScope)

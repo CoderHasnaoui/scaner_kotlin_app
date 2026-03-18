@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.Context
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimi_projet_zentech.data.local.TokenManager
 import com.example.mimi_projet_zentech.data.local.db.DatabaseProvider
@@ -24,18 +26,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.mimi_projet_zentech.data.local.UserRepository
 import com.example.mimi_projet_zentech.ui.theme.ui.helper.BiometricHelper
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-
+@HiltViewModel
 class  SignInViewModel @Inject constructor (
-    application: Application ,
+
+    @ApplicationContext private  val context: Context ,
     private val authRepository: AuthRepository ,
     private val roomRep: UserAccountRepository ,
     private val tokenManager : TokenManager ,
     private val userRepository: UserRepository
-): AndroidViewModel(application) {
+): ViewModel() {
     // db Local
-    val  db = DatabaseProvider.getDatabase(application)
+//    val  db = DatabaseProvider.getDatabase(application)
 //    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
     //Api Calles
 //    private val tokenManager = TokenManager(getApplication())
@@ -145,6 +150,8 @@ class  SignInViewModel @Inject constructor (
 
                     }
                 } catch (e: Exception) {
+                    Log.e("SIGNIN_ERROR", "Exception: ${e.message}")  // ← add this
+                    Log.e("SIGNIN_ERROR", "Cause: ${e.cause}")        // ← add this
                     _state.value = SignInState.Error("Something Wrong.")
                 }
 //                finally {
@@ -195,7 +202,7 @@ class  SignInViewModel @Inject constructor (
     private fun isNetworkAvailable(): Boolean {
 
 
-        val connectivityManager = getApplication<Application>()
+        val connectivityManager = context
             .getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
         val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false

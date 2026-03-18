@@ -38,8 +38,8 @@
 
 
     @Composable
-    fun DeniedScreen(navController: NavController , viewModel: ScanViewMode) {
-        val uistate= viewModel.uiState.collectAsStateWithLifecycle()
+    fun DeniedScreen(navController: NavController , viewModel: ScanViewMode ) {
+        val uistate by  viewModel.uiState.collectAsStateWithLifecycle()
         var showManualDialog by remember { mutableStateOf(false) }
         val context = LocalContext.current
 
@@ -52,7 +52,9 @@
                         scanRes = scanStatus
                     )
                 )
+                viewModel.clearNavigation()
             }
+
         }
 
         LifecycleResumeEffect(Unit) {
@@ -155,7 +157,7 @@
             }
         }
 
-        // 👇 loading overlay
+        // loading overlay
         if (uistate is ScanUiState.Verifiying) {
             Box(
                 modifier = Modifier

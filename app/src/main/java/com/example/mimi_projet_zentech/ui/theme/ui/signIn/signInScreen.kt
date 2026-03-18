@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -48,11 +49,11 @@ import com.example.mimi_projet_zentech.ui.theme.util.Screen
 @RequiresApi(Build.VERSION_CODES.R)
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavController) {
+fun SignInScrenn( navController: NavController) {
 
     val focusManager = LocalFocusManager.current
     val activity = LocalContext.current as FragmentActivity
-
+val viewModel : SignInViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val field by viewModel.fields.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
@@ -129,7 +130,7 @@ fun SignInScrenn(viewModel: SignInViewModel = viewModel() , navController: NavCo
                 Spacer(modifier = Modifier.height(5.dp))
                 // this is Forget password tache  ?
                 TextButton(onClick = {} ,
-                    contentPadding = PaddingValues(0.dp) // that for forcing to padding to back to value default  ?
+                    contentPadding = PaddingValues(0.dp) // that for forcing  padding to back to value default  ?
                 ) {
                     Text(
                         text = SignInStrings.FORGET_PASSWORD ,
