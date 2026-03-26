@@ -52,7 +52,6 @@ fun HomeScreen(
     val query by viewModel.searchText.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
 
-    // YOUR ORIGINAL REDIRECT LOGIC
     val navigateToScanner: (String) -> Unit = { slug ->
         navController.navigate(Screen.ScannerScreen.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
@@ -62,7 +61,14 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.checkInitialState(forceSelect, onRedirect = navigateToScanner)
     }
-
+    if (uiState is HomeUiState.Redirecting) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+        return  // exit composable
+    }
     BackHandler {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
         val hasSlug = viewModel.slugManager.getSlug() != null
@@ -110,7 +116,8 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(60.dp))
         }
 
-        if (query.isEmpty()) {
+        if (query.isEmpty()   &&  uiState !is HomeUiState.Loading &&
+            uiState !is HomeUiState.Redirecting) {
             Text(
                 text = "Select the Business Group that is hosting the event.",
                 style = MaterialTheme.typography.titleLarge,
@@ -127,6 +134,14 @@ fun HomeScreen(
         Box(modifier = Modifier.weight(1f).padding(bottom = 40.dp)) {
 
             when (val state = uiState) {
+                is HomeUiState.Redirecting -> {
+                    // show blank page  redirectin
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    )
+                }
                 is HomeUiState.Loading -> LoadingView()
 
                 is HomeUiState.NoResults -> NoSearchResultView()
@@ -146,7 +161,10 @@ fun HomeScreen(
                         Text(state.message, color = MaterialTheme.colorScheme.onBackground)
                         Spacer(modifier = Modifier.height(16.dp))
                         // FIXED: Added navigateToScanner here too
-                        Button(onClick = { viewModel.loadMerchants(forceSelect, navigateToScanner) }) {
+                        Button(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D58D1)) ,
+                            onClick = { viewModel.loadMerchants(forceSelect, navigateToScanner) }) {
                             Text("Try Again")
                         }
                     }

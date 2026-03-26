@@ -70,14 +70,14 @@ fun ScannerScreen(navController: NavController , viewModel: ScanViewMode ) {
         val previousRoute = navController.previousBackStackEntry?.destination?.route
 
         if (previousRoute == Screen.Home.route || previousRoute == null  || previousRoute == Screen.passwordConfirm.route) {
-            //   previeus  is Home or none so  exit app
+            //   previeus  is Home or none   exit app
             (navController.context as? Activity)?.finish()
         } else {
             //  previous is Profile or Denied  back
             navController.popBackStack()
         }
     }
-    // Pulse Animation (Scale)
+    //  Animation (Scale)
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.98f,
         targetValue = 1.04f,
@@ -145,7 +145,7 @@ fun ScannerScreen(navController: NavController , viewModel: ScanViewMode ) {
                     }
             )
 
-            // MOVING LASER LINE
+            // moving laser line
             Box(
                 modifier = Modifier
                     .width(200.dp)

@@ -63,7 +63,7 @@ class HomeViewModel @Inject constructor(
     val expandedLocationIds = mutableStateMapOf<String, Boolean>()
 
     init{
-        observeRoomData()
+//        observeRoomData()
     }
 
     private fun observeRoomData() {
@@ -81,6 +81,8 @@ class HomeViewModel @Inject constructor(
         }
     }
     private fun updateUiState(merchants: List<MerchantGroup>, query: String) {
+        if (_uiState.value is HomeUiState.Redirecting) return
+        if (_uiState.value is HomeUiState.Error) return
         if (merchants.isEmpty()) {
 
             if (_uiState.value !is HomeUiState.Loading) {
@@ -102,6 +104,7 @@ class HomeViewModel @Inject constructor(
         val savedSlug = slugManager.getSlug()
 
         if (!forceSelect && !savedSlug.isNullOrEmpty()) {
+            _uiState.value = HomeUiState.Redirecting
             onRedirect(savedSlug)
             return
         }
@@ -117,16 +120,17 @@ class HomeViewModel @Inject constructor(
             }
 
             if (localMerchants.isNotEmpty()) {
-                // Case A: Exactly 1 merchant in Room -> Auto-redirect
+                // Case A: Exactly 1 merchant in Room automaticly Refirct
                 if (localMerchants.size == 1 && !forceSelect) {
+                    _uiState.value = HomeUiState.Redirecting
                     val slug = localMerchants[0].merchantGroup.slug
                     slugManager.saveSlug(slug)
                     withContext(Dispatchers.Main) {
                         onRedirect(slug)
                     }
                 } else {
-                    // Case B: Multiple merchants -> Show the list AND sync in background
-                    // We use a separate launch so the UI doesn't wait for the network to finish
+                    // Case B: Multiple merchants  Show the list et  sync api
+                    observeRoomData()
                     launch(Dispatchers.IO) {
                         try {
                             repo.refrechMerchant()
@@ -136,7 +140,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             } else {
-                // Case C: Room is totally empty! We must load from the API.
+                // Case C: Room is Vide : load from the aPi.
                 loadMerchants(forceSelect, onRedirect)
             }
         }
@@ -144,7 +148,8 @@ class HomeViewModel @Inject constructor(
     fun loadMerchants(forceSelect: Boolean = false, onRedirect: (String) -> Unit) {
 
         viewModelScope.launch {
-            // 1. SAFE LOCAL CHECK
+            _uiState.value = HomeUiState.Loading
+        // chechk localeement
             val localData = withContext(Dispatchers.IO) {
                 try {
                     repo.getCurrentMerchantsOnce()
@@ -173,6 +178,8 @@ class HomeViewModel @Inject constructor(
                         slugManager.saveSlug(slug)
                         onRedirect(slug)
 
+                    } else{
+                        observeRoomData()
                     }
                 } else {
                     _uiState.value = HomeUiState.Error("No data. Check internet.")

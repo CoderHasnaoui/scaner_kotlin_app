@@ -51,7 +51,7 @@ class ProfileViewModel @Inject constructor(
 //    private val RoomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
 
 //    val db = DatabaseProvider.getDatabase(application)
-    val api = RetrofitInstance.getPrivateApi(tokenManager , onTokenExpired = { SessionManager.notifyTokenExpired()})
+//    val api = RetrofitInstance.getPrivateApi(tokenManager , onTokenExpired = { SessionManager.notifyTokenExpired()})
 
 //    val repository = MerchantRepository(api ,db.merchantDao() )
 //    val themeRepo = ThemeRepository()
@@ -118,7 +118,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-            isReady = false
+//            isReady = false
             try {
                 val slug = slugManager.getSlug()
                 if (slug != null) {
@@ -132,7 +132,7 @@ class ProfileViewModel @Inject constructor(
                     errorMessage = "No Business Group Selected"
                 }
             } catch (e: Exception) {
-                errorMessage = "Failed to load profile."
+                errorMessage = "Failed to load Merchant."
             } finally {
                 isLoading = false
                 isReady = true
@@ -144,7 +144,7 @@ class ProfileViewModel @Inject constructor(
     fun retry() {
         selectedMerchant = null
         errorMessage = null
-        isReady = false
+
         Log.d("SLUG_DEBUG", "slug = ${slugManager.getSlug()}")
         loadProfileData()
     }

@@ -327,7 +327,7 @@ fun BiometricSwitchSection(
                             password = password,
                             email = email,
                             onSuccess = { _, plainPassword ->
-                                // ← replace launchEncryptPrompt with BiometricHelper
+                                //  launchEncryptPrompt with BiometricHelper
                                 BiometricHelper(activity, tokenManager).launchEncrypt(
                                     password = plainPassword,
                                     onSuccess = { encryptedPassword, iv ->

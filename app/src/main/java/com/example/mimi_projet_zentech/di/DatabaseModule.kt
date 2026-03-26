@@ -25,7 +25,6 @@ object  DatabaseModule {
             "app_database"
         ).build()
     }
-
     @Provides
     fun provideMerchantDao(dao  : AppDatabase): MerchantDao{
         return dao.merchantDao()

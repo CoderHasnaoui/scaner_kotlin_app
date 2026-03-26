@@ -194,7 +194,7 @@ class TokenManager(private val context: Context) {
         val decryptedBytes = authenticatedCipher.doFinal(encryptedBytes)
         return String(decryptedBytes, Charsets.UTF_8)
     }
-    // Encrypt password → returns encrypted data to save in Room
+    // Encrypt password returns encrypted data to save in Room
     fun encryptPassword(authenticatedCipher: Cipher, password: String): Pair<String, String> {
         val encryptedBytes = authenticatedCipher.doFinal(password.toByteArray(Charsets.UTF_8))
         val iv = authenticatedCipher.iv
@@ -203,7 +203,7 @@ class TokenManager(private val context: Context) {
             Base64.encodeToString(iv, Base64.DEFAULT)
         )
     }
-    // Decrypt password → needs encrypted data from Room
+    // Decrypt password  needs encrypted data from Room
     fun decryptPassword(authenticatedCipher: Cipher, encryptedPassword: String): String {
         val encryptedBytes = Base64.decode(encryptedPassword, Base64.DEFAULT)
         return String(authenticatedCipher.doFinal(encryptedBytes), Charsets.UTF_8)

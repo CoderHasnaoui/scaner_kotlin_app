@@ -87,7 +87,7 @@ fun ValidScreen(
     }
     val ticket = (uiState as? ValidUiState.Success)?.ticket
 
-    // Rest of your screen runs only when loading is done
+    //  runs just when loading is done
     Column(
         modifier = Modifier
             .fillMaxSize()
