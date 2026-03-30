@@ -80,7 +80,7 @@ fun AccountScreen(navController: NavController ,    viewModel: AccountViewModel 
         }
         is AccountUiState.MultipleAccounts ->{
             val users  = (accountState as AccountUiState.MultipleAccounts).users
-            multipleAccount(navController ,users)}
+            multipleAccount(navController ,users ,  viewModel)}
 
         AccountUiState.Loading -> {}
     }
@@ -125,7 +125,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 
         // horizental icon for delet Acounts
         IconButton(
-            colors = IconButtonDefaults.iconButtonColors(Color.White) ,
+//            colors = IconButtonDefaults.iconButtonColors(Color.White) ,
             onClick = {  navController.navigate(Screen.ManageProfile.getRoute(user.email)) },
             modifier = Modifier
                 .align(Alignment.End)
@@ -200,7 +200,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 }
 
 @Composable
-fun multipleAccount(navController: NavController ,users :  List<UserAccount>) {
+fun multipleAccount(navController: NavController ,users :  List<UserAccount> , viewModel: AccountViewModel) {
     val configuration = LocalConfiguration.current
 
     val screenHeight = configuration.screenHeightDp.dp
@@ -234,7 +234,10 @@ fun multipleAccount(navController: NavController ,users :  List<UserAccount>) {
         Spacer(modifier = Modifier.height(screenHeight.value*0.1.dp))
 
         //  List Of Account And Log to otherAccount
-        ListOfAccount(users , Modifier.weight(1f))
+        ListOfAccount(users ,  onUserSelected = { user ->
+ // twl ui to awitch to singl account
+            viewModel.selectUser(user)
+        }, Modifier.weight(1f))
         Spacer(modifier = Modifier.height(12.dp))
         brandName()
         Spacer(modifier = Modifier.height(10.dp))

@@ -175,11 +175,11 @@ fun brandName(){
     )
 }
 @Composable
-fun AccountCard(userInfo : UserAccount) {
+fun AccountCard(userInfo : UserAccount ,  onUserClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth().height(75.dp)
-            .clickable { /* to ho,me Screen ***/},
+            .clickable { onUserClick() },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp , color = Color.Gray.copy(alpha = 0.5f))
@@ -235,7 +235,7 @@ fun AccountCard(userInfo : UserAccount) {
     }
 }
 @Composable
-fun ListOfAccount(Accounts:List<UserAccount>, modifier: Modifier ){
+fun ListOfAccount(Accounts:List<UserAccount>, onUserSelected: (UserAccount) -> Unit, modifier: Modifier ){
     LazyColumn(
         modifier = modifier, // 🔹
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -247,7 +247,7 @@ fun ListOfAccount(Accounts:List<UserAccount>, modifier: Modifier ){
 
         ) {
         items(Accounts) { userAccount ->
-            AccountCard(userAccount)
+            AccountCard(userAccount, onUserClick = { onUserSelected(userAccount) })
         }
 
 

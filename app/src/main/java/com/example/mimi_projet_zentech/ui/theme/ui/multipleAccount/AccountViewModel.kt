@@ -43,7 +43,7 @@ class AccountViewModel @Inject  constructor(
 //    private val db = DatabaseProvider.getDatabase(application)
 //    private val roomRepo by lazy { UserAccountRepository(db.userAccountDao()) }
 //    private val userRepository = UserRepository(getApplication<Application>().dataStore)
-
+private val _selectedUser = MutableStateFlow<UserAccount?>(null)
     // Account State
     private val _loginError = MutableStateFlow(false)
     val loginError: StateFlow<Boolean> = _loginError.asStateFlow()
@@ -68,11 +68,15 @@ class AccountViewModel @Inject  constructor(
     init {
         loadAccounts()
     }
-
+    fun selectUser(user: UserAccount) {
+        _selectedUser.value = user
+    }
     private fun loadAccounts() {
         viewModelScope.launch(Dispatchers.IO) {
             roomRepo.allUsers.collect { users ->
+                val selected = _selectedUser.value
                 _accountState.value = when {
+                    selected != null -> AccountUiState.SingleAccount(selected)
                     users.isEmpty() -> AccountUiState.NoAccount
                     users.size == 1 -> AccountUiState.SingleAccount(users.first())
                     else -> AccountUiState.MultipleAccounts(users)
