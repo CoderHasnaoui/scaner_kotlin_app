@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,6 +59,8 @@ class ProfileViewModel @Inject constructor(
 
 //    val slugManager = SlugManager(context = application)
 //    private val userRepository = UserRepository(getApplication<Application>().dataStore)
+
+
     val isBiometricEnabled: StateFlow<Boolean> = userRepository
         .isBiometricEnabled()
         .stateIn(
@@ -68,14 +71,27 @@ class ProfileViewModel @Inject constructor(
 //    private val repoSign = AuthRepository(RetrofitInstance.publicApi)
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
-    var selectedMerchant by mutableStateOf<MerchantGroup?>(null)
+    val selectedMerchant: StateFlow<MerchantGroup?> = slugManager.getSlugFlow()
+        .flatMapLatest { slug ->
+            if (slug != null) {
+                // get locaal slug
+                repository.getMerchantBySlugFlow(slug)
+            } else {
+                flowOf(null)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
     var isReady by mutableStateOf(false)
-// i use it for my check if taht user have password endcrypted in Room
     val currentUser: StateFlow<UserAccount?> = userRepository.email
         .flatMapLatest { email ->
             RoomRepo.getUserByEmailFlow(email)
         }
         .stateIn(
+
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
@@ -113,26 +129,26 @@ class ProfileViewModel @Inject constructor(
 //    }
 
     fun loadProfileData() {
-        if (selectedMerchant != null) return
 
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-//            isReady = false
             try {
                 val slug = slugManager.getSlug()
                 if (slug != null) {
-                    val result = repository.getMerchantBySlug(slug)
-                    if (result != null) {
-                        selectedMerchant = result
-                    } else {
-                        errorMessage = "Merchant not found."
-                    }
+                    // 1. Fetch from API and save to Room
+                    repository.refrechMerchant()
                 } else {
                     errorMessage = "No Business Group Selected"
                 }
             } catch (e: Exception) {
-                errorMessage = "Failed to load Merchant."
+
+                Log.e("PROFILE_LOAD", "Failed to refresh API: ${e.message}")
+
+                // Only show error text if Room is completely empty
+                if (selectedMerchant.value == null) {
+                    errorMessage = "Offline: No cached data found."
+                }
             } finally {
                 isLoading = false
                 isReady = true
@@ -142,7 +158,7 @@ class ProfileViewModel @Inject constructor(
 
     // Add this new function for retry
     fun retry() {
-        selectedMerchant = null
+//        selectedMerchant = null
         errorMessage = null
 
         Log.d("SLUG_DEBUG", "slug = ${slugManager.getSlug()}")

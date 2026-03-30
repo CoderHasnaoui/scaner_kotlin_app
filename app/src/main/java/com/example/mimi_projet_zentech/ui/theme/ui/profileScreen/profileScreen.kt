@@ -65,6 +65,7 @@ fun profileScreen(
     isDarkModeState: MutableState<Boolean>, // This controls the app theme
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val merchant by viewModel.selectedMerchant.collectAsStateWithLifecycle()
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
@@ -160,9 +161,14 @@ fun profileScreen(
                             }
                             // Succes State
                             else {
-                                val merchant = viewModel.selectedMerchant
+
                                 Column {
-                                    Text(merchant?.name ?: "No Selection", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                    Text(
+                                        text = merchant?.name ?: "No Selection",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
                                     val tag = merchant?.name?.let { "@${it.replace(" ", "").lowercase()}" } ?: "@unknown"
                                     Text(tag, fontSize = 14.sp, color = Color.Gray)
                                 }
@@ -187,11 +193,15 @@ fun profileScreen(
                         }
                     }
                     // Location List
-                    if (viewModel.selectedMerchant != null) {
+                    if (merchant != null) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp)) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
                             Column(modifier = Modifier.padding(12.dp)) {
-                                viewModel.selectedMerchant?.locations?.forEach { loc ->
+                                merchant?.locations?.forEach { loc ->
                                     Text(loc.name, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }

@@ -30,7 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
@@ -44,7 +48,6 @@ fun ManualEntryDialog(
 ) {
     if (!show) return
 
-    // Use rememberSaveable so text doesn't disappear on rotate
     var passId by rememberSaveable { mutableStateOf("") }
 
     Dialog(
@@ -52,14 +55,13 @@ fun ManualEntryDialog(
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = false,
-            // UsePlatformDefaultWidth = false allows the card to be wider if needed
             usePlatformDefaultWidth = true
         )
     ) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp), // Add some outer padding
+                .padding(16.dp), //  outer padding
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
@@ -74,10 +76,19 @@ fun ManualEntryDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
+                        text = buildAnnotatedString {
+                            append("Trouble scanning?\n")
+                            withStyle(
+                                style = SpanStyle(
+                                    fontSize = 12.sp
+                                )
+                            ) {
+                                append("Enter manually")
+                            }
+                        },
                         color = MaterialTheme.colorScheme.onBackground,
-                        text = "Trouble scanning?Enter manually", // Added newline for better fit
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f) // Give text room
+                        modifier = Modifier.weight(1f)
                     )
 
                     IconButton(onClick = {
@@ -111,7 +122,7 @@ fun ManualEntryDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(50.dp),
-                    // 🔹 Only enable if user typed something
+                    //  Only enable if user typed something
                     enabled = passId.isNotBlank()
                 ) {
                     Text(

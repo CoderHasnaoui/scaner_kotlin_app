@@ -12,6 +12,7 @@ import com.example.mimi_projet_zentech.data.model.GroupeMerchant.Location
 import com.example.mimi_projet_zentech.data.model.GroupeMerchant.MerchantGroup
 import com.example.mimi_projet_zentech.data.remote.AuthApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import retrofit2.Response
 import java.net.UnknownHostException
 import javax.inject.Inject
@@ -66,6 +67,11 @@ class MerchantRepository @Inject constructor(
             response.body()?.find { it.slug == slug }
         } else {
             null
+        }
+    }
+    fun getMerchantBySlugFlow(slug: String): Flow<MerchantGroup?> {
+        return dao.getMerchantBySlugFlow(slug).map { entity ->
+            entity?.toMerchantGroup()
         }
     }
     private suspend fun saveToDb(merchants: List<MerchantEntity>, locations: List<LocationEntity>) {

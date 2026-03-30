@@ -22,7 +22,9 @@ interface MerchantDao {
     @Transaction
     @Query("SELECT * FROM Merchant ")
       fun getMErchantGroupe(): Flow<List<GroupeWithLocation>>
-
+  @Transaction
+  @Query("SELECT * FROM Merchant WHERE slug = :slug LIMIT 1")
+  fun getMerchantBySlugFlow(slug: String): Flow<GroupeWithLocation?>
     @Transaction
     @Query("SELECT * FROM Merchant")
     suspend fun getStaticMerchantGroups(): List<GroupeWithLocation>
