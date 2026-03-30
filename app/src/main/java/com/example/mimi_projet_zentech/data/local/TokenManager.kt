@@ -102,12 +102,9 @@ class TokenManager(private val context: Context) {
             }
     }
 
-
     /********  LOGIN MANAGEMENT  */
  // state User
-    fun isLoggedIn(): Boolean {
-        return loginPrefs.getBoolean(TokenStrings.IS_LOGIN, false)
-    }
+
 // logiIn
     fun setLoggedIn(value: Boolean) {
         loginPrefs.edit {
@@ -218,7 +215,9 @@ class TokenManager(private val context: Context) {
     }
 
     // Get encrypt cipher (no IV needed, generated automatically)
-
+    fun isLoggedIn(): Boolean {
+        return loginPrefs.getBoolean(TokenStrings.IS_LOGIN, false)
+    }
     fun getDecryptCipher(): Cipher? {
         val prefs = context.getSharedPreferences(TokenStrings.PREFE_SLUG_NAME, Context.MODE_PRIVATE)
         val ivString = prefs.getString(PASSWORD_IV_KEY, null) ?: return null

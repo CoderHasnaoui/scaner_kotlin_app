@@ -1,6 +1,7 @@
 import android.app.Activity
 import android.net.Uri
 import android.util.Log
+import android.widget.Space
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -18,7 +19,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -155,7 +158,7 @@ fun ScannerScreen(navController: NavController , viewModel: ScanViewMode ) {
                         brush = Brush.horizontalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Red.copy(alpha = 0.8f),
+                                Color.Blue.copy(alpha = 0.8f),
                                 Color.Transparent
                             )
                         )
@@ -206,11 +209,29 @@ fun ScannerScreen(navController: NavController , viewModel: ScanViewMode ) {
                 }
             }
         }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .padding(top = 100.dp), // push  from the top
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        Text(
+            text = "Scan QR code",
+            color = Color.White,
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelLarge
+        )
+
+        Spacer(modifier = Modifier.height(8.dp)) // Space between the two texts
+
+        // Flash Instruction
         Text(
             text = if (isFlashOn) "Flash is Active" else "Press long to turn flash on",
             color = Color.Yellow.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 100.dp)
-        )
+            style = MaterialTheme.typography.labelSmall
+        )}
     }
 }

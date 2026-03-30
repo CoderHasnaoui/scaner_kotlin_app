@@ -2,10 +2,13 @@ package com.example.mimi_projet_zentech.ui.theme
 
 import ScannerScreen
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +36,7 @@ import com.example.mimi_projet_zentech.ui.theme.ui.statusScreen.ValidScreen
 import com.example.mimi_projet_zentech.ui.theme.util.Screen
 import com.yourapp.qrscanner.permission.CameraPermission
 
+@RequiresApi(Build.VERSION_CODES.P)
 @SuppressLint("RememberReturnType")
 @Composable
 fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
@@ -41,7 +45,7 @@ fun NavigationsSeting (isDarkModeState: MutableState<Boolean>){
     val navController = rememberNavController()
 //    val tokenManager = remember { TokenManager(context) }
 //    val isLoggedIn = remember { tokenManager.isLoggedIn() }
-    remember {
+    LaunchedEffect(navController) {
         SessionManager.onTokenExpired = {
             navController.navigate(Screen.Login.route) {
                 popUpTo(0) { inclusive = true }

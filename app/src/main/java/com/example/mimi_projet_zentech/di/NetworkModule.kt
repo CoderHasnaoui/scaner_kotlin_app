@@ -46,8 +46,10 @@ object NetworkModule {
                 val response = chain.proceed(request)
 
                 if (response.code == 401) {
-                    tokenManager.clearToken()
-                    SessionManager.notifyTokenExpired()
+
+                    tokenManager.clearToken() // clear token
+                    tokenManager.logOut() // logout localy
+                    SessionManager.notifyTokenExpired()  // call global navigation
                 }
 
                 response

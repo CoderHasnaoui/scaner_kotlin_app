@@ -48,6 +48,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.compose.foundation.background
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -124,6 +125,7 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 
         // horizental icon for delet Acounts
         IconButton(
+            colors = IconButtonDefaults.iconButtonColors(Color.White) ,
             onClick = {  navController.navigate(Screen.ManageProfile.getRoute(user.email)) },
             modifier = Modifier
                 .align(Alignment.End)
@@ -131,12 +133,14 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
 //                .padding(8.dp)
         ) {
             Icon(
+
                 imageVector = Icons.Default.MoreHoriz,
-                contentDescription = "Menu"
+                contentDescription = "Menu" ,
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
         // image of app
-        iconApp()
+//        iconApp()
 
         Spacer(modifier = Modifier.height(7.dp))
         // profile image
@@ -176,7 +180,8 @@ fun singleAccountUi(navController: NavController , user: UserAccount ) {
                     } else {
                         navController.navigate(Screen.passwordConfirm.getRoute(user.email))
                     }
-                }
+                }  ,
+            isEnableBio = isBiometricEnabled
             )
 
 

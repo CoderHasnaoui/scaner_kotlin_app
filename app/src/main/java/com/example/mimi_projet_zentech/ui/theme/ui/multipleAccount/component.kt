@@ -97,7 +97,8 @@ fun dispalyUserName(name :String){
 
 fun loginButton(
     to_login: () -> Unit,
-    isLoading: Boolean = false
+    isLoading: Boolean = false  ,
+    isEnableBio :Boolean  = false
 ) {
     TextButton(
         onClick = to_login,
@@ -116,7 +117,9 @@ fun loginButton(
             )
         } else {
             Text(
-                "Log in",
+
+             if(isEnableBio)    "Login using Biometric" else  "Login"
+               ,
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.White,
                 textAlign = TextAlign.Center
@@ -130,7 +133,7 @@ fun toLoginPage(to_login:()->Unit){
     TextButton(onClick = to_login ,modifier = Modifier.fillMaxWidth()){
         Text("Log into another Account" ,
 
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 1.2.sp,
             textAlign = TextAlign.Center  ,
             fontWeight = FontWeight.Normal,

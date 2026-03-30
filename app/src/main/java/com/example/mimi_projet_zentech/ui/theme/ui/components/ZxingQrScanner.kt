@@ -30,28 +30,32 @@ fun ZxingQrScanner(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
     val pausedState by rememberUpdatedState(isPaused)
 
-    val previewView = remember { PreviewView(context) }
-    val cameraController = remember { LifecycleCameraController(context) }
-
-    // Control the Flash
-    LaunchedEffect(isFlashOn) {
-        cameraController.enableTorch(isFlashOn)
+    // 1. Remember the controller and scanner once
+    val cameraController = remember {
+        LifecycleCameraController(context).apply {
+            // Pre-set size for faster startup
+            imageAnalysisTargetSize = CameraController.OutputSize(android.util.Size(1280, 720))
+            bindToLifecycle(lifecycleOwner)
+        }
     }
 
-    LaunchedEffect(Unit) {
-        cameraController.imageAnalysisTargetSize = CameraController.OutputSize(
-            android.util.Size(1280, 720)
-        )
-
-        val barcodeScanner = BarcodeScanning.getClient(
+    val barcodeScanner = remember {
+        BarcodeScanning.getClient(
             BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                 .build()
         )
+    }
 
+    // 2. Control the Flash (This is fast)
+    LaunchedEffect(isFlashOn) {
+        cameraController.enableTorch(isFlashOn)
+    }
+
+    // 3. Set up the Analyzer ONLY ONCE
+    LaunchedEffect(cameraController) {
         cameraController.setImageAnalysisAnalyzer(
             ContextCompat.getMainExecutor(context),
             MlKitAnalyzer(
@@ -59,39 +63,34 @@ fun ZxingQrScanner(
                 CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
                 ContextCompat.getMainExecutor(context)
             ) { result ->
-
                 if (!pausedState) {
                     val barcodeResults = result.getValue(barcodeScanner)
                     if (!barcodeResults.isNullOrEmpty()) {
                         barcodeResults[0].rawValue?.let { value ->
-                            // Check one more time before calling onResult
-                            if (!pausedState) {
-                                onResult(value)
-                            }
+                            onResult(value)
                         }
                     }
                 }
             }
         )
-
-        cameraController.bindToLifecycle(lifecycleOwner)
-        previewView.controller = cameraController
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // Camera
         AndroidView(
-            factory = { previewView },
-            update = { },
+            factory = { ctx ->
+                PreviewView(ctx).apply {
+                    controller = cameraController
+                }
+            },
             modifier = Modifier.fillMaxSize()
         )
 
+        // Overlay for gestures
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = { onLongPress() }
-                    )
+                    detectTapGestures(onLongPress = { onLongPress() })
                 }
         )
     }

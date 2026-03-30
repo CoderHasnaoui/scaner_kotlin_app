@@ -156,7 +156,7 @@ dependencies {
         // This gives you access to almost every Material icon (Outlined, Rounded, etc.)
         implementation("androidx.compose.material:material-icons-extended:1.7.0")
 
-    dependencies {
+
         // 1. The ViewModel library (The "Brain")
         implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
@@ -166,7 +166,7 @@ dependencies {
         // 3. Navigation Compose (You already have this, but it's part of the flow)
         implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    }
+
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -175,9 +175,9 @@ dependencies {
     // Compose
     implementation("com.google.android.material:material:1.12.0")
     // lolit dependeency
-    dependencies {
+
         implementation("com.airbnb.android:lottie-compose:6.7.1")
-    }
+
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

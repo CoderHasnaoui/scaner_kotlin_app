@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,10 +73,22 @@ fun Pass_confirmScrren(  navController: NavController , viewModel: passConfirmat
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                ),
                 title = { Text("", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+
+                        Icon(
+
+                            Icons.Default.ArrowBack, "Back",
+                            tint = MaterialTheme.colorScheme.onBackground,
+
+                        )
                     }
                 },
 
@@ -118,7 +131,7 @@ fun Pass_confirmScrren(  navController: NavController , viewModel: passConfirmat
 
             Spacer(modifier = Modifier.height(38.dp))
             loginButton(
-                to_login = { viewModel.onConfirmClicked() },  // call login -> HomeScrren
+                to_login = { viewModel.onConfirmClicked() },  // call login  to  HomeScrren
                 isLoading = state is SignInState.Loading
             )
 

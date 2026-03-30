@@ -28,7 +28,7 @@ class splashViewModel @Inject constructor(private val tokenManager: TokenManager
 //            initialValue = "Loading..."
 //        )
     init {
-        checkLoginStatus()
+        checkLoginStatus();
     }
     private fun checkLoginStatus(){
         viewModelScope.launch{
